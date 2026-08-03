@@ -120,7 +120,7 @@ export default function Home() {
 
       <div className="w-[1280px] h-[768px] bg-[#2A2A2A] rounded-md shadow-2xl p-6 border-4 border-[#1A1A1A] flex gap-6">
         
-        {/* 1. SOL SÜTUN (KAYIT ALANI - Mükemmel Dikey Ortalama) */}
+        {/* 1. SOL SÜTUN (KAYIT ALANI) */}
         <div className="flex-1 bg-[#222222] rounded shadow-inner border-t-2 border-[#444] border-l-2 border-[#444] border-r border-[#111] border-b border-[#111] p-8 flex flex-col items-center justify-between">
           
           <div className="text-center w-full">
@@ -148,12 +148,12 @@ export default function Home() {
           </div>
 
           <div className="w-full flex flex-col items-center">
-            {/* Dolgun Buton Görünümlü Alan */}
-            <div className={`w-[90%] border-2 p-5 text-center rounded shadow-lg transition-all duration-300
-              ${recordState === 'idle' || recordState === 'done' ? 'border-[#555] bg-[#2A2A2A] opacity-50' : 'border-[#888] bg-[#333] opacity-100 shadow-[0_0_15px_rgba(255,255,255,0.1)]'}
+            {/* Büyütülmüş ve Full Uppercase Dolgun Buton Alanı */}
+            <div className={`w-[95%] border-2 p-6 text-center rounded shadow-lg transition-all duration-300
+              ${recordState === 'idle' || recordState === 'done' ? 'border-[#555] bg-[#2A2A2A] opacity-50' : 'border-[#888] bg-[#333] opacity-100 shadow-[0_0_20px_rgba(255,255,255,0.15)]'}
             `}>
-              <span className="text-white text-sm font-bold tracking-wider leading-relaxed block">
-                {recordState === 'recording' ? 'hissediliyor...' : 'space tuşuna basılı tut ve içinden ilk ölçünü mırıldan'}
+              <span className="text-white text-lg font-extrabold tracking-wider uppercase leading-snug block">
+                {recordState === 'recording' ? 'HİSSEDİLİYOR...' : 'SPACE TUŞUNA BASILI TUT VE İÇİNDEN İLK ÖLÇÜNÜ MIRILDAN'}
               </span>
             </div>
           </div>
@@ -208,7 +208,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Metrik Vurgu (Yalnızca Ölçü Girildiyse Görünür) */}
+          {/* Metrik Vurgu */}
           <div className="w-full flex flex-col items-center pb-8 min-h-[100px] justify-center">
             {numVal > 0 ? (
               <>
