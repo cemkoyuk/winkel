@@ -3,43 +3,49 @@
 import { useState, useEffect, useRef } from 'react';
 
 export default function Home() {
-  // --- DURUMLAR (STATES) ---
   const [recordState, setRecordState] = useState<'idle' | 'armed' | 'recording' | 'done'>('idle');
   const [elapsedTime, setElapsedTime] = useState<number>(0);
   
-  // Ölçü ve Vurgu ayarları
   const [numeratorInput, setNumeratorInput] = useState<string>('');
   const [denominatorInput, setDenominatorInput] = useState<string>('');
   const [selectedPreset, setSelectedPreset] = useState<string>('');
   const [activeAccents, setActiveAccents] = useState<number[]>([1]);
   
-  // Oynatma durumu
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
 
-  // Zamanlayıcı referansları
   const startTimeRef = useRef<number>(0);
   const animationFrameRef = useRef<number>(0);
 
-  // Aktif pay ve hesaplamalar
   const numVal = parseInt(numeratorInput) || 0;
-  const bpm = elapsedTime > 0 && numVal > 0 ? Math.max(20, Math.round(60 / (elapsedTime / numVal))) : 112;
+  const bpm = elapsedTime > 0 && numVal > 0 ? Math.max(10, Math.round(60 / (elapsedTime / numVal))) : 112;
   
-  // BPM'e göre tempo terimi
+  // Gönderdiğin tablodaki tüm İtalyanca Tempo Aralıkları ve Açıklamaları
   const getTempoInfo = (currentBpm: number) => {
-    if (currentBpm < 45) return { term: "Grave", desc: "Çok ağır, ciddi, vakur ve derin bir ağırlıkta." };
-    if (currentBpm < 55) return { term: "Lento", desc: "Yavaş, durgun, sakin ve ağırbaşlı." };
-    if (currentBpm < 66) return { term: "Larghetto", desc: "Largo'dan biraz daha hızlı, nispeten daha rahat genişlikte." };
-    if (currentBpm < 76) return { term: "Adagio", desc: "Rahat, acele etmeden, yavaş ve lirik." };
-    if (currentBpm < 108) return { term: "Andante", desc: "Yürüyüş hızında, doğal insan adımı ritminde, sakin." };
+    if (currentBpm <= 20) return { term: "Larghissimo", desc: "Aşırı yavaş, olabilecek en geniş ve en derin ritim." };
+    if (currentBpm <= 45) return { term: "Grave", desc: "Çok ağır, ciddi, vakur ve derin bir ağırlıkta." };
+    if (currentBpm <= 50) return { term: "Largo", desc: "Geniş, büyük, yayayarak ve oldukça yavaş." };
+    if (currentBpm <= 55) return { term: "Lento", desc: "Yavaş, durgun, sakin ve ağırbaşlı." };
+    if (currentBpm <= 66) return { term: "Larghetto", desc: "Largo'dan biraz daha hızlı, nispeten daha rahat genişlikte." };
+    if (currentBpm <= 76) return { term: "Adagio", desc: "Rahat, acele etmeden, yavaş ve lirik." };
+    if (currentBpm <= 80) return { term: "Adagietto", desc: "Adagio'dan biraz daha hızlı, hafif hafif akan yavaşlık." };
+    if (currentBpm <= 92) return { term: "Andantino", desc: "Andante'den biraz daha hızlı (tarihsel olarak bazen daha yavaş)." };
+    if (currentBpm <= 85) return { term: "Marcia moderato", desc: "Askeri marş temposunda, düzenli ve ılımlı adım hızında." };
+    if (currentBpm <= 108) return { term: "Andante", desc: "Yürüyüş hızında, doğal insan adımı ritminde, sakin." };
+    if (currentBpm <= 112) return { term: "Andante moderato", desc: "Yürüyüş hızı ile orta hızın tam arasında dengeli bir tempo." };
     if (currentBpm <= 120) return { term: "Moderato", desc: "Orta hızda, dengeli, ne çok hızlı ne çok yavaş (ılımlı)." };
-    if (currentBpm < 156) return { term: "Allegro", desc: "Hızlı, neşeli, parlak, canlı ve belirgin bir hızda." };
-    if (currentBpm < 176) return { term: "Vivace", desc: "Oldukça hızlı, neşeli, atılgan ve hayat dolu." };
-    return { term: "Presto", desc: "Çok hızlı, aceleci ve süratli." };
+    if (currentBpm <= 120) return { term: "Allegretto", desc: "Allegro'dan biraz daha yavaş ancak oldukça hafif, canlı ve neşeli." };
+    if (currentBpm <= 124) return { term: "Animato", desc: "Canlı, hareketli, ruh dolu ve heyecanlı." };
+    if (currentBpm <= 138) return { term: "Allegro", desc: "Hızlı, neşeli, parlak, canlı ve belirgin bir hızda." };
+    if (currentBpm <= 144) return { term: "Allegro assai", desc: "Çok hızlı, Allegro sınırlarını iyice zorlayan kararlılıkta." };
+    if (currentBpm <= 160) return { term: "Allegro vivace", desc: "Allegro'dan daha canlı, hızlı ve kıvrak adımlarla." };
+    if (currentBpm <= 176) return { term: "Vivace", desc: "Oldukça hızlı, neşeli, atılgan ve hayat dolu." };
+    if (currentBpm <= 180) return { term: "Vivo", desc: "Canlı, ateşli, enerjik ve çok hızlı." };
+    if (currentBpm <= 200) return { term: "Presto", desc: "Çok hızlı, aceleci ve süratli." };
+    return { term: "Prestissimo", desc: "Mümkün olan en yüksek hızda, adeta çılgınca ve durdurulamaz." };
   };
 
   const tempoInfo = getTempoInfo(bpm);
 
-  // --- KAYIT (SPACE TUŞU) MANTIĞI ---
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'Space') {
@@ -75,7 +81,6 @@ export default function Home() {
     };
   }, [recordState]);
 
-  // Vurgu seçme/kaldırma
   const toggleAccent = (beat: number) => {
     setActiveAccents(prev => 
       prev.includes(beat) ? prev.filter(a => a !== beat) : [...prev, beat]
@@ -120,9 +125,8 @@ export default function Home() {
 
       <div className="w-[1280px] h-[768px] bg-[#2A2A2A] rounded-md shadow-2xl p-6 border-4 border-[#1A1A1A] flex gap-6">
         
-        {/* 1. SOL SÜTUN (KAYIT ALANI) */}
+        {/* 1. SOL SÜTUN */}
         <div className="flex-1 bg-[#222222] rounded shadow-inner border-t-2 border-[#444] border-l-2 border-[#444] border-r border-[#111] border-b border-[#111] p-8 flex flex-col items-center justify-between">
-          
           <div className="text-center w-full">
             <span className="text-[#888888] text-sm font-bold tracking-widest uppercase">
               {recordState === 'done' ? 'yeni kayıt başlat' : 'kayda girmek için kırmızı tuşa dokun'}
@@ -134,7 +138,6 @@ export default function Home() {
               {recordState === 'recording' ? 'ON AIR' : 'OFF AIR'}
             </span>
             
-            {/* Büyük Kırmızı Yuvarlak */}
             <div 
               onClick={() => setRecordState('armed')}
               className={`w-40 h-40 rounded-full border-[6px] cursor-pointer transition-all duration-300 flex items-center justify-center
@@ -148,7 +151,6 @@ export default function Home() {
           </div>
 
           <div className="w-full flex flex-col items-center">
-            {/* Büyütülmüş ve Full Uppercase Dolgun Buton Alanı */}
             <div className={`w-[95%] border-2 p-6 text-center rounded shadow-lg transition-all duration-300
               ${recordState === 'idle' || recordState === 'done' ? 'border-[#555] bg-[#2A2A2A] opacity-50' : 'border-[#888] bg-[#333] opacity-100 shadow-[0_0_20px_rgba(255,255,255,0.15)]'}
             `}>
@@ -165,9 +167,8 @@ export default function Home() {
           </div>
         </div>
 
-        {/* 2. ORTA SÜTUN (ÖLÇÜ VE VURGU) */}
+        {/* 2. ORTA SÜTUN */}
         <div className={`flex-1 bg-[#222222] rounded shadow-inner border-t-2 border-[#444] border-l-2 border-[#444] border-r border-[#111] border-b border-[#111] p-8 flex flex-col transition-opacity duration-500 ${recordState === 'done' ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
-          
           <div className="flex-1 flex flex-col items-center pt-6">
             <span className="text-[#888] text-sm font-bold tracking-widest mb-4">ölçü gir</span>
             
@@ -208,7 +209,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Metrik Vurgu */}
           <div className="w-full flex flex-col items-center pb-8 min-h-[100px] justify-center">
             {numVal > 0 ? (
               <>
@@ -230,13 +230,10 @@ export default function Home() {
               <span className="text-[#444] text-xs italic">Ölçü seçildiğinde vurgular görünecek</span>
             )}
           </div>
-
         </div>
 
-        {/* 3. SAĞ SÜTUN (PLAY VE SONUÇLAR) */}
+        {/* 3. SAĞ SÜTUN */}
         <div className="flex-1 flex flex-col gap-6">
-          
-          {/* Oynatma Bölümü */}
           <div className={`flex-1 bg-[#222222] rounded shadow-inner border-t-2 border-[#444] border-l-2 border-[#444] border-r border-[#111] border-b border-[#111] flex flex-col items-center justify-center transition-opacity duration-500 ${recordState === 'done' ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
             <span className="text-white text-sm font-bold tracking-widest mb-6 uppercase">
               {isPlaying ? 'Metronomu Durdur' : 'Metronomu Başlat'}
@@ -256,7 +253,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Tempo Bölümü */}
           <div className="flex-1 bg-[#222222] rounded shadow-inner border-t-2 border-[#444] border-l-2 border-[#444] border-r border-[#111] border-b border-[#111] flex flex-col items-center justify-center p-6 text-center">
             {isPlaying ? (
               <>
@@ -264,15 +260,14 @@ export default function Home() {
                   <span className="text-white text-7xl font-bold">{bpm}</span>
                   <span className="text-[#888] text-xl">bpm</span>
                 </div>
-                <h2 className="text-white text-5xl italic font-serif mb-4 lowercase">{tempoInfo.term}</h2>
-                <p className="text-[#888] text-sm leading-relaxed max-w-[80%]">{tempoInfo.desc}</p>
+                <h2 className="text-white text-4xl italic font-serif mb-3 lowercase">{tempoInfo.term}</h2>
+                <p className="text-[#888] text-xs leading-relaxed max-w-[85%]">{tempoInfo.desc}</p>
               </>
             ) : (
               <span className="text-[#555] italic">Metronom başlatılmadı...</span>
             )}
           </div>
 
-          {/* Sarkaç (Pendulum) Bölümü */}
           <div className="flex-1 bg-[#222222] rounded shadow-inner border-t-2 border-[#444] border-l-2 border-[#444] border-r border-[#111] border-b border-[#111] relative overflow-hidden flex items-end justify-center pb-4">
              <div 
                 className="w-1 bg-[#888] origin-bottom absolute bottom-0 h-[150px] flex flex-col items-center"
@@ -284,8 +279,8 @@ export default function Home() {
                 <div className="w-5 h-5 bg-white rounded-full -mt-2"></div>
              </div>
           </div>
-
         </div>
+
       </div>
     </main>
   );
