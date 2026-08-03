@@ -4,37 +4,47 @@ import { useState, useEffect, useRef } from 'react';
 
 export default function Home() {
   // --- DURUMLAR (STATES) ---
-  // idle: Başlangıç | armed: Kırmızı butona basıldı, space bekleniyor | recording: Space'e basılı | done: Kayıt bitti
   const [recordState, setRecordState] = useState<'idle' | 'armed' | 'recording' | 'done'>('idle');
   const [elapsedTime, setElapsedTime] = useState<number>(0);
   
   // Ölçü ve Vurgu ayarları
-  const [timeSignature, setTimeSignature] = useState<string>('4/4');
-  const [activeAccents, setActiveAccents] = useState<number[]>([1]); // Default sadece 1. vuruş
+  const [numerator, setNumerator] = useState<number>(4);
+  const [denominator, setDenominator] = useState<number>(4);
+  const [activeAccents, setActiveAccents] = useState<number[]>([1]);
   
   // Oynatma durumu
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
 
-  // Referanslar (Timer için)
+  // Zamanlayıcı referansları
   const startTimeRef = useRef<number>(0);
   const animationFrameRef = useRef<number>(0);
 
-  // Gönderdiğin resimdeki genişletilmiş ölçü listesi
-  const timeSignatures = [
-    '2/4', '3/4', '4/4', '5/4', '6/4', '3/8', 
-    '5/8', '6/8', '7/8', '9/8', '12/8', '2/2', '3/2'
-  ];
+  // BPM ve Tempo Hesaplama
+  const bpm = elapsedTime > 0 ? Math.max(20, Math.round(60 / (elapsedTime / numerator))) : 112;
+  
+  // BPM'e göre tempo terimi bulma
+  const getTempoInfo = (currentBpm: number) => {
+    if (currentBpm < 45) return { term: "Grave", desc: "Çok ağır, ciddi, vakur ve derin bir ağırlıkta." };
+    if (currentBpm < 55) return { term: "Lento", desc: "Yavaş, durgun, sakin ve ağırbaşlı." };
+    if (currentBpm < 66) return { term: "Larghetto", desc: "Largo'dan biraz daha hızlı, nispeten daha rahat genişlikte." };
+    if (currentBpm < 76) return { term: "Adagio", desc: "Rahat, acele etmeden, yavaş ve lirik." };
+    if (currentBpm < 108) return { term: "Andante", desc: "Yürüyüş hızında, doğal insan adımı ritminde, sakin." };
+    if (currentBpm <= 120) return { term: "Moderato", desc: "Orta hızda, dengeli, ne çok hızlı ne çok yavaş (ılımlı)." };
+    if (currentBpm < 156) return { term: "Allegro", desc: "Hızlı, neşeli, parlak, canlı ve belirgin bir hızda." };
+    if (currentBpm < 176) return { term: "Vivace", desc: "Oldukça hızlı, neşeli, atılgan ve hayat dolu." };
+    return { term: "Presto", desc: "Çok hızlı, aceleci ve süratli." };
+  };
 
-  // Seçilen ölçünün üst rakamını (pay) bulup o kadar vurgu butonu oluşturmak için
-  const numerator = parseInt(timeSignature.split('/')[0]) || 4;
+  const tempoInfo = getTempoInfo(bpm);
 
   // --- KAYIT (SPACE TUŞU) MANTIĞI ---
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'Space') {
-        e.preventDefault(); // Sayfanın aşağı kaymasını engeller
+        e.preventDefault();
         if (recordState === 'armed') {
           setRecordState('recording');
+          setIsPlaying(false); // Yeni kayıt başlarken oynatmayı durdur
           startTimeRef.current = performance.now();
           
           const updateTimer = () => {
@@ -63,178 +73,193 @@ export default function Home() {
     };
   }, [recordState]);
 
-  // Vurgu seçme/kaldırma mantığı
+  // Vurgu seçme/kaldırma
   const toggleAccent = (beat: number) => {
     setActiveAccents(prev => 
-      prev.includes(beat) 
-        ? prev.filter(a => a !== beat) 
-        : [...prev, beat]
+      prev.includes(beat) ? prev.filter(a => a !== beat) : [...prev, beat]
     );
   };
 
-  // Yeni ölçü seçildiğinde vurguları resetle (sadece 1'i seçili bırak)
-  const handleSignatureChange = (sig: string) => {
-    setTimeSignature(sig);
+  const handlePresetSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const [num, den] = e.target.value.split('/');
+    setNumerator(parseInt(num));
+    setDenominator(parseInt(den));
     setActiveAccents([1]);
   };
 
   return (
     <main className="flex items-center justify-center w-screen h-screen bg-black overflow-hidden select-none">
-      <div className="w-[1280px] h-[768px] bg-[#2A2A2A] rounded-md shadow-2xl flex flex-col border-2 border-[#1A1A1A]">
+      
+      {/* Sarkaç Animasyonu için Özel CSS */}
+      <style>{`
+        @keyframes swing {
+          0% { transform: rotate(-35deg); }
+          100% { transform: rotate(35deg); }
+        }
+      `}</style>
+
+      {/* ANA KASA (TR-1000 Stili) */}
+      <div className="w-[1280px] h-[768px] bg-[#2A2A2A] rounded-md shadow-2xl p-6 border-4 border-[#1A1A1A] flex gap-6">
         
-        {/* ÜST BAR */}
-        <div className="h-6 bg-[#1A1A1A] border-b-2 border-black"></div>
+        {/* 1. SOL SÜTUN (KAYIT ALANI) */}
+        <div className="flex-1 bg-[#222222] rounded shadow-inner border-t-2 border-[#444] border-l-2 border-[#444] border-r border-[#111] border-b border-[#111] p-8 flex flex-col items-center justify-between">
+          <div className="text-center w-full">
+            <span className="text-[#888888] text-sm font-bold tracking-widest uppercase">kayda girmek için kırmızı tuşa dokun</span>
+          </div>
 
-        {/* KONTROL PANELİ */}
-        <div className="h-[55%] bg-[#333333] p-6 flex gap-6">
+          <div className="flex flex-col items-center mt-8">
+            <span className={`font-bold tracking-widest mb-4 transition-colors duration-300 ${recordState === 'idle' ? 'text-[#555]' : 'text-red-500 animate-pulse'}`}>
+              {recordState === 'idle' ? 'OFF AIR' : 'ON AIR'}
+            </span>
+            
+            {/* Büyük Kırmızı Yuvarlak */}
+            <div 
+              onClick={() => { if (recordState === 'idle' || recordState === 'done') setRecordState('armed'); }}
+              className={`w-40 h-40 rounded-full border-[6px] cursor-pointer transition-all duration-300 flex items-center justify-center
+                ${recordState === 'idle' || recordState === 'done' ? 'border-red-600 hover:bg-red-900/20' : ''}
+                ${recordState === 'armed' ? 'bg-red-600/30 border-red-500 shadow-[0_0_30px_rgba(220,38,38,0.5)]' : ''}
+                ${recordState === 'recording' ? 'bg-red-600 border-red-500 animate-pulse shadow-[0_0_50px_rgba(220,38,38,0.8)]' : ''}
+              `}
+            >
+              {recordState === 'idle' && <div className="w-6 h-6 bg-red-600 rounded-full opacity-30"></div>}
+            </div>
+          </div>
+
+          <div className="w-full flex flex-col items-center mt-8">
+            <div className={`w-[90%] border-2 p-6 text-center transition-all duration-300
+              ${recordState === 'idle' || recordState === 'done' ? 'border-[#444] opacity-50' : 'border-[#888] opacity-100'}
+            `}>
+              <span className="text-white text-base tracking-wider leading-relaxed">
+                {recordState === 'recording' ? 'hissediliyor...' : 'space tuşuna basılı tut ve içinden ilk ölçünü mırıldan'}
+              </span>
+            </div>
+          </div>
+
+          <div className="w-full text-center mt-auto pb-4">
+            <span className="text-white font-mono text-7xl font-bold tracking-wider">
+              {elapsedTime.toFixed(5)}
+            </span>
+          </div>
+        </div>
+
+        {/* 2. ORTA SÜTUN (ÖLÇÜ VE VURGU) */}
+        <div className={`flex-1 bg-[#222222] rounded shadow-inner border-t-2 border-[#444] border-l-2 border-[#444] border-r border-[#111] border-b border-[#111] p-8 flex flex-col transition-opacity duration-500 ${recordState === 'done' ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
           
-          {/* SOL PANEL - REFERANS SÜRE */}
-          <div className={`flex-1 bg-[#2C2C2C] rounded-sm shadow-inner border-t-2 border-[#444444] border-l-2 border-[#444444] border-r border-[#222222] border-b border-[#222222] p-4 flex flex-col transition-opacity duration-500 ${recordState === 'done' ? 'opacity-30 pointer-events-none' : 'opacity-100'}`}>
-            <div className="bg-[#1A1A1A] px-3 py-1 self-start rounded-sm mb-4">
-              <span className="text-white text-xs font-bold tracking-wider">REFERANS SÜRE</span>
-            </div>
+          <div className="flex-1 flex flex-col items-center pt-10">
+            <span className="text-[#888] text-sm font-bold tracking-widest mb-6">ölçü gir</span>
             
-            <div className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-[#555555] rounded bg-[#222222] p-4 text-center relative">
-                
-                {/* Kronometre Ekranı */}
-                <div className="absolute top-4 text-orange-500 font-mono text-2xl tracking-widest font-bold">
-                  {elapsedTime > 0 ? elapsedTime.toFixed(5) : "0.00000"}
-                </div>
-
-                {/* Kırmızı Kayıt Butonu */}
-                <div 
-                  onClick={() => { if (recordState === 'idle') setRecordState('armed'); }}
-                  className={`w-12 h-12 rounded-full border-4 mt-8 mb-6 cursor-pointer transition-all duration-300 flex items-center justify-center
-                    ${recordState === 'idle' ? 'border-red-600 hover:bg-red-900/30' : ''}
-                    ${recordState === 'armed' ? 'bg-red-600 border-red-600' : ''}
-                    ${recordState === 'recording' ? 'bg-red-600 border-red-600 animate-pulse' : ''}
-                  `}
-                >
-                  {recordState === 'idle' && <div className="w-4 h-4 bg-red-600 rounded-full opacity-50"></div>}
-                </div>
-
-                {/* Space Tuşu Yönergesi */}
-                <div className={`w-64 h-12 rounded flex items-center justify-center border-b-4 transition-all duration-300
-                    ${recordState === 'idle' ? 'bg-[#333] border-[#222] opacity-40' : ''}
-                    ${recordState === 'armed' ? 'bg-[#555] border-[#111] animate-pulse opacity-100 shadow-[0_0_15px_rgba(255,255,255,0.2)]' : ''}
-                    ${recordState === 'recording' ? 'bg-[#777] border-t-4 border-b-0 border-[#222] opacity-100 scale-95' : ''}
-                  `}>
-                    <span className="text-white font-bold tracking-widest text-sm">
-                      {recordState === 'recording' ? 'HİSSEDİYOR...' : 'SPACE TUŞUNA BASILI TUT'}
-                    </span>
-                </div>
-                
-                <span className="text-[#666666] text-xs leading-relaxed mt-4">
-                  {recordState === 'idle' ? 'Önce kayıt ikonuna tıklayarak sistemi kur.' : 'İçindeki ölçüyü hissettiğinde tuşu bırak.'}
-                </span>
-            </div>
-          </div>
-
-          {/* ORTA PANEL - ÖLÇÜ VE VURGU */}
-          <div className={`flex-[1.5] bg-[#2C2C2C] rounded-sm shadow-inner border-t-2 border-[#444444] border-l-2 border-[#444444] border-r border-[#222222] border-b border-[#222222] p-4 flex flex-col transition-opacity duration-500 ${recordState === 'done' ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
-            <div className="bg-[#1A1A1A] px-3 py-1 self-start rounded-sm mb-4">
-              <span className="text-white text-xs font-bold tracking-wider">ÖLÇÜ & VURGU</span>
-            </div>
-            
-            {/* Ölçü Seçimi (Grid Yapısı) */}
-            <div className="mb-6">
-              <div className="grid grid-cols-5 gap-2">
-                {timeSignatures.map(m => (
-                    <div 
-                      key={m} 
-                      onClick={() => handleSignatureChange(m)}
-                      className={`flex items-center justify-center py-2 rounded text-sm font-bold cursor-pointer transition-colors border 
-                        ${timeSignature === m ? 'bg-[#DDDDDD] text-black border-white shadow-sm' : 'bg-[#1A1A1A] text-[#AAAAAA] border-[#333333] hover:bg-[#333333]'}`}
-                    >
-                      {m}
-                    </div>
-                ))}
-                {/* Özel Ölçü Girişi (Daha) */}
-                <div className="flex items-center justify-center py-2 rounded text-sm font-bold cursor-pointer transition-colors border bg-[#1A1A1A] text-[#AAAAAA] border-[#333333] hover:bg-[#333333]">
-                  DAHA...
-                </div>
-              </div>
+            {/* Ölçü Girdileri */}
+            <div className="flex items-center gap-4 mb-8">
+              <input 
+                type="number" 
+                value={numerator} 
+                onChange={(e) => { setNumerator(Number(e.target.value) || 4); setActiveAccents([1]); }}
+                className="w-20 h-24 bg-transparent border-2 border-white text-white text-5xl text-center outline-none focus:border-orange-500" 
+              />
+              <span className="text-white text-5xl font-light">/</span>
+              <input 
+                type="number" 
+                value={denominator} 
+                onChange={(e) => setDenominator(Number(e.target.value) || 4)}
+                className="w-20 h-24 bg-transparent border-2 border-white text-white text-5xl text-center outline-none focus:border-orange-500" 
+              />
             </div>
 
-            {/* Vurgu (Aksan) Seçimi - Dinamik olarak pay (numerator) kadar buton üretir */}
-            <div className="flex-1 flex flex-col justify-end">
-              <span className="text-[#888888] text-xs block mb-3 font-bold tracking-widest border-t border-[#444] pt-4">METRİK VURGU (Çoklu Seçim)</span>
-              <div className="flex gap-2 flex-wrap">
-                {Array.from({ length: Math.min(numerator, 16) }, (_, i) => i + 1).map(a => (
-                    <div 
-                      key={a} 
-                      onClick={() => toggleAccent(a)}
-                      className={`w-10 h-10 flex items-center justify-center rounded-full text-xs font-bold border-2 cursor-pointer transition-colors 
-                        ${activeAccents.includes(a) ? 'border-orange-500 text-orange-500 bg-[#3a1d0f] shadow-[0_0_10px_rgba(249,115,22,0.3)]' : 'border-[#555555] text-[#777777] bg-[#111111] hover:border-[#888888]'}`}
-                    >
-                      {a}
-                    </div>
-                ))}
-              </div>
-            </div>
-          </div>
+            <span className="text-[#888] text-sm font-bold tracking-widest mb-8">ya da</span>
 
-          {/* SAĞ PANEL - KONTROLLER */}
-          <div className="flex-1 bg-[#2C2C2C] rounded-sm shadow-inner border-t-2 border-[#444444] border-l-2 border-[#444444] border-r border-[#222222] border-b border-[#222222] p-4 flex flex-col">
-            <div className="bg-[#1A1A1A] px-3 py-1 self-start rounded-sm mb-6">
-              <span className="text-white text-xs font-bold tracking-wider">KONTROLLER</span>
-            </div>
-            <div className="flex justify-around items-center flex-1">
-                {/* Volume Potansı */}
-                <div className="flex flex-col items-center">
-                    <div className="w-16 h-16 rounded-full bg-[#111111] border-[5px] border-[#1A1A1A] shadow-[0_5px_15px_rgba(0,0,0,0.8)] relative flex items-center justify-center cursor-pointer">
-                        <div className="w-1 h-3 bg-white absolute top-1 rounded-full"></div>
-                    </div>
-                    <span className="text-[#888888] text-xs mt-4 font-bold tracking-widest">VOLUME</span>
-                </div>
-                {/* Nudge */}
-                <div className="flex flex-col items-center">
-                     <div className="flex gap-1 mb-2">
-                        <div className="w-10 h-10 bg-[#1A1A1A] rounded flex items-center justify-center text-[#AAAAAA] font-bold border-t border-[#444444] shadow-md cursor-pointer hover:bg-[#333333]">&lt;</div>
-                        <div className="w-10 h-10 bg-[#1A1A1A] rounded flex items-center justify-center text-[#AAAAAA] font-bold border-t border-[#444444] shadow-md cursor-pointer hover:bg-[#333333]">&gt;</div>
-                     </div>
-                     <span className="text-[#888888] text-xs mt-2 font-bold tracking-widest">NUDGE</span>
-                </div>
-            </div>
-          </div>
-
-        </div>
-
-        {/* ALT EKRAN (SONUÇ VE OYNATMA) */}
-        <div className="h-[45%] bg-[#0a0a0a] flex flex-col items-center justify-center border-t-[8px] border-[#1A1A1A] shadow-inner relative">
-            
-            {/* Oynatılmıyorsa kocaman Başlat butonu görünür */}
-            {!isPlaying ? (
-              <div 
-                onClick={() => recordState === 'done' && setIsPlaying(true)}
-                className={`px-16 py-6 rounded-full border-4 text-3xl font-bold tracking-[0.2em] transition-all duration-300
-                  ${recordState === 'done' ? 'border-white text-white cursor-pointer hover:bg-white hover:text-black hover:scale-105 shadow-[0_0_30px_rgba(255,255,255,0.2)]' : 'border-[#333] text-[#333] cursor-not-allowed'}
-                `}
+            {/* Ölçü Seç Dropdown */}
+            <div className="w-48 relative border-2 border-white">
+              <select 
+                value={`${numerator}/${denominator}`}
+                onChange={handlePresetSelect}
+                className="w-full bg-transparent text-white text-lg p-3 outline-none appearance-none cursor-pointer"
               >
-                BAŞLAT
+                <option value="2/4" className="bg-[#222]">2/4</option>
+                <option value="3/4" className="bg-[#222]">3/4</option>
+                <option value="4/4" className="bg-[#222]">4/4</option>
+                <option value="6/8" className="bg-[#222]">6/8</option>
+                <option value="7/8" className="bg-[#222]">7/8</option>
+              </select>
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                <div className="w-4 h-4 border-b-2 border-r-2 border-white transform rotate-45"></div>
               </div>
-            ) : (
-              /* Oynatılıyorsa sonuçlar görünür */
-              <div className="flex flex-col items-center">
-                <h1 className="text-6xl text-white font-light tracking-[0.2em] mb-4 uppercase">MODERATO</h1>
-                <p className="text-[#666666] text-lg font-medium">Orta hızda, dengeli, ne çok hızlı ne çok yavaş (ılımlı)</p>
-                <div className="flex items-baseline gap-3 mt-8">
-                  <span className="text-8xl text-orange-500 font-bold tracking-tighter drop-shadow-[0_0_20px_rgba(249,115,22,0.15)]">112</span>
-                  <span className="text-[#555555] text-4xl font-bold tracking-widest">BPM</span>
-                </div>
-                
-                {/* Durdur Butonu (Mini) */}
+            </div>
+          </div>
+
+          {/* Metrik Vurgu */}
+          <div className="w-full flex flex-col items-center pb-12">
+            <span className="text-[#888] text-sm font-bold tracking-widest mb-6">Metrik vurgu</span>
+            <div className="flex gap-4 flex-wrap justify-center">
+              {Array.from({ length: Math.min(numerator, 16) }, (_, i) => i + 1).map(a => (
                 <div 
-                  onClick={() => setIsPlaying(false)}
-                  className="absolute bottom-6 right-8 px-6 py-2 border-2 border-[#333] text-[#777] rounded cursor-pointer hover:border-white hover:text-white transition-colors text-sm font-bold tracking-widest"
+                  key={a} 
+                  onClick={() => toggleAccent(a)}
+                  className={`w-14 h-14 flex items-center justify-center rounded-full text-lg font-bold border-2 cursor-pointer transition-colors 
+                    ${activeAccents.includes(a) ? 'border-white bg-white text-black' : 'border-[#666] text-[#666] hover:border-white hover:text-white'}`}
                 >
-                  DURDUR
+                  {a}
                 </div>
-              </div>
-            )}
-            
+              ))}
+            </div>
+          </div>
+
         </div>
 
+        {/* 3. SAĞ SÜTUN (PLAY VE SONUÇLAR) */}
+        <div className="flex-1 flex flex-col gap-6">
+          
+          {/* Oynatma Bölümü */}
+          <div className={`flex-1 bg-[#222222] rounded shadow-inner border-t-2 border-[#444] border-l-2 border-[#444] border-r border-[#111] border-b border-[#111] flex flex-col items-center justify-center transition-opacity duration-500 ${recordState === 'done' ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
+            <span className="text-white text-sm font-bold tracking-widest mb-6 uppercase">
+              {isPlaying ? 'Metronomu Durdur' : 'Metronomu Başlat'}
+            </span>
+            <div 
+              onClick={() => recordState === 'done' && setIsPlaying(!isPlaying)}
+              className="w-28 h-28 rounded-full border-4 border-white flex items-center justify-center cursor-pointer hover:bg-white/10 transition-colors"
+            >
+              {!isPlaying ? (
+                <div className="w-0 h-0 border-t-[20px] border-t-transparent border-l-[35px] border-l-white border-b-[20px] border-b-transparent ml-3"></div>
+              ) : (
+                <div className="flex gap-3">
+                  <div className="w-3 h-12 bg-white"></div>
+                  <div className="w-3 h-12 bg-white"></div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Tempo Bölümü */}
+          <div className="flex-1 bg-[#222222] rounded shadow-inner border-t-2 border-[#444] border-l-2 border-[#444] border-r border-[#111] border-b border-[#111] flex flex-col items-center justify-center p-6 text-center">
+            {recordState === 'done' ? (
+              <>
+                <div className="flex items-baseline gap-2 mb-2">
+                  <span className="text-white text-7xl font-bold">{bpm}</span>
+                  <span className="text-[#888] text-xl">bpm</span>
+                </div>
+                <h2 className="text-white text-5xl italic font-serif mb-4 lowercase">{tempoInfo.term}</h2>
+                <p className="text-[#888] text-sm leading-relaxed max-w-[80%]">{tempoInfo.desc}</p>
+              </>
+            ) : (
+              <span className="text-[#555] italic">Bekleniyor...</span>
+            )}
+          </div>
+
+          {/* Sarkaç (Pendulum) Bölümü */}
+          <div className="flex-1 bg-[#222222] rounded shadow-inner border-t-2 border-[#444] border-l-2 border-[#444] border-r border-[#111] border-b border-[#111] relative overflow-hidden flex items-end justify-center pb-4">
+             {/* Sarkaç Çubuğu */}
+             <div 
+                className="w-1 bg-[#888] origin-bottom absolute bottom-0 h-[150px] flex flex-col items-center"
+                style={{ 
+                  animation: isPlaying ? `swing ${60 / bpm}s ease-in-out infinite alternate` : 'none',
+                  transform: isPlaying ? 'none' : 'rotate(20deg)' 
+                }}
+             >
+                {/* Sarkaç Topu */}
+                <div className="w-5 h-5 bg-white rounded-full -mt-2"></div>
+             </div>
+          </div>
+
+        </div>
       </div>
     </main>
   );
