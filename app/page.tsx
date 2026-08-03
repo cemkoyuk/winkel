@@ -112,7 +112,6 @@ export default function Home() {
     "1/2", "2/2", "3/2"
   ];
 
-  // Sağ sütunun açılabilmesi için hem kayıt bitmiş olmalı hem de geçerli bir ölçü (numerator > 0) girilmiş olmalı
   const isRightColumnActive = recordState === 'done' && numVal > 0;
 
   return (
@@ -159,11 +158,13 @@ export default function Home() {
           </div>
 
           <div className="w-full flex flex-col items-center">
-            {/* Hazır (Ready) turuncu rengi alt butona da yansıtıldı */}
+            {/* Hissediliyor durumunda arka plan beyaz, yazı koyu gri (#222222) oldu */}
             <div className={`w-[95%] border-2 p-6 text-center rounded shadow-lg transition-all duration-300
-              ${recordState === 'armed' ? 'border-orange-500 bg-[#3a1d0f] shadow-[0_0_20px_rgba(249,115,22,0.3)]' : recordState === 'idle' || recordState === 'done' ? 'border-[#555] bg-[#2A2A2A] opacity-50' : 'border-[#888] bg-[#333] opacity-100 shadow-[0_0_20px_rgba(255,255,255,0.15)]'}
+              ${recordState === 'recording' ? 'border-white bg-white opacity-100 shadow-[0_0_25px_rgba(255,255,255,0.4)]' : recordState === 'armed' ? 'border-orange-500 bg-[#3a1d0f] shadow-[0_0_20px_rgba(249,115,22,0.3)]' : 'border-[#555] bg-[#2A2A2A] opacity-50'}
             `}>
-              <span className={`text-lg font-extrabold tracking-wider uppercase leading-snug block ${recordState === 'armed' ? 'text-orange-400 animate-pulse' : 'text-white'}`}>
+              <span className={`text-lg font-extrabold tracking-wider uppercase leading-snug block 
+                ${recordState === 'recording' ? 'text-[#222222]' : recordState === 'armed' ? 'text-orange-400 animate-pulse' : 'text-white'}
+              `}>
                 {recordState === 'recording' ? 'HİSSEDİLİYOR...' : 'SPACE TUŞUNA BASILI TUT VE İÇİNDEN İLK ÖLÇÜNÜ MIRILDAN'}
               </span>
             </div>
@@ -241,7 +242,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* 3. SAĞ SÜTUN (Yalnızca kayıt bitmiş ve ölçü girilmişse aktifleşir) */}
+        {/* 3. SAĞ SÜTUN */}
         <div className="flex-1 flex flex-col gap-6">
           <div className={`flex-1 bg-[#222222] rounded shadow-inner border-t-2 border-[#444] border-l-2 border-[#444] border-r border-[#111] border-b border-[#111] flex flex-col items-center justify-center transition-opacity duration-500 ${isRightColumnActive ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
             <span className="text-white text-sm font-bold tracking-widest mb-6 uppercase">
