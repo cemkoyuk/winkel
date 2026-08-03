@@ -19,7 +19,6 @@ export default function Home() {
   const numVal = parseInt(numeratorInput) || 0;
   const bpm = elapsedTime > 0 && numVal > 0 ? Math.max(10, Math.round(60 / (elapsedTime / numVal))) : 112;
   
-  // Gönderdiğin tablodaki tüm İtalyanca Tempo Aralıkları ve Açıklamaları
   const getTempoInfo = (currentBpm: number) => {
     if (currentBpm <= 20) return { term: "Larghissimo", desc: "Aşırı yavaş, olabilecek en geniş ve en derin ritim." };
     if (currentBpm <= 45) return { term: "Grave", desc: "Çok ağır, ciddi, vakur ve derin bir ağırlıkta." };
@@ -33,7 +32,6 @@ export default function Home() {
     if (currentBpm <= 108) return { term: "Andante", desc: "Yürüyüş hızında, doğal insan adımı ritminde, sakin." };
     if (currentBpm <= 112) return { term: "Andante moderato", desc: "Yürüyüş hızı ile orta hızın tam arasında dengeli bir tempo." };
     if (currentBpm <= 120) return { term: "Moderato", desc: "Orta hızda, dengeli, ne çok hızlı ne çok yavaş (ılımlı)." };
-    if (currentBpm <= 120) return { term: "Allegretto", desc: "Allegro'dan biraz daha yavaş ancak oldukça hafif, canlı ve neşeli." };
     if (currentBpm <= 124) return { term: "Animato", desc: "Canlı, hareketli, ruh dolu ve heyecanlı." };
     if (currentBpm <= 138) return { term: "Allegro", desc: "Hızlı, neşeli, parlak, canlı ve belirgin bir hızda." };
     if (currentBpm <= 144) return { term: "Allegro assai", desc: "Çok hızlı, Allegro sınırlarını iyice zorlayan kararlılıkta." };
@@ -115,11 +113,17 @@ export default function Home() {
   ];
 
   return (
-    <main className="flex items-center justify-center w-screen h-screen bg-black overflow-hidden select-none">
+    <main className="fixed inset-0 flex items-center justify-center w-screen h-screen bg-black overflow-hidden select-none">
       <style>{`
         @keyframes swing {
           0% { transform: rotate(-35deg); }
           100% { transform: rotate(35deg); }
+        }
+        body, html {
+          overflow: hidden;
+          position: fixed;
+          width: 100%;
+          height: 100%;
         }
       `}</style>
 
@@ -134,15 +138,16 @@ export default function Home() {
           </div>
 
           <div className="flex flex-col items-center">
-            <span className={`font-bold tracking-widest mb-4 transition-colors duration-300 ${recordState === 'recording' ? 'text-red-500 animate-pulse' : 'text-[#555]'}`}>
-              {recordState === 'recording' ? 'ON AIR' : 'OFF AIR'}
+            <span className={`font-bold tracking-widest mb-4 transition-colors duration-300 
+              ${recordState === 'recording' ? 'text-red-500 animate-pulse' : recordState === 'armed' ? 'text-orange-500 animate-pulse' : 'text-[#555]'}`}>
+              {recordState === 'recording' ? 'ON AIR' : recordState === 'armed' ? 'READY' : 'OFF AIR'}
             </span>
             
             <div 
               onClick={() => setRecordState('armed')}
               className={`w-40 h-40 rounded-full border-[6px] cursor-pointer transition-all duration-300 flex items-center justify-center
                 ${recordState === 'idle' || recordState === 'done' ? 'border-red-600 hover:bg-red-900/25' : ''}
-                ${recordState === 'armed' ? 'bg-red-600/40 border-red-500 shadow-[0_0_30px_rgba(220,38,38,0.5)]' : ''}
+                ${recordState === 'armed' ? 'bg-red-600/40 border-orange-500 shadow-[0_0_30px_rgba(249,115,22,0.5)]' : ''}
                 ${recordState === 'recording' ? 'bg-red-600 border-red-500 animate-pulse shadow-[0_0_50px_rgba(220,38,38,0.8)]' : ''}
               `}
             >
@@ -167,7 +172,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* 2. ORTA SÜTUN */}
+        {/* 2. ORTA SÜTUN (Kayıt olana kadar silik) */}
         <div className={`flex-1 bg-[#222222] rounded shadow-inner border-t-2 border-[#444] border-l-2 border-[#444] border-r border-[#111] border-b border-[#111] p-8 flex flex-col transition-opacity duration-500 ${recordState === 'done' ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
           <div className="flex-1 flex flex-col items-center pt-6">
             <span className="text-[#888] text-sm font-bold tracking-widest mb-4">ölçü gir</span>
@@ -253,7 +258,8 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="flex-1 bg-[#222222] rounded shadow-inner border-t-2 border-[#444] border-l-2 border-[#444] border-r border-[#111] border-b border-[#111] flex flex-col items-center justify-center p-6 text-center">
+          {/* Alt iki kısım: Play'e basılana kadar opacity düşük (silik) */}
+          <div className={`flex-1 bg-[#222222] rounded shadow-inner border-t-2 border-[#444] border-l-2 border-[#444] border-r border-[#111] border-b border-[#111] flex flex-col items-center justify-center p-6 text-center transition-opacity duration-500 ${isPlaying ? 'opacity-100' : 'opacity-30'}`}>
             {isPlaying ? (
               <>
                 <div className="flex items-baseline gap-2 mb-2">
@@ -268,7 +274,7 @@ export default function Home() {
             )}
           </div>
 
-          <div className="flex-1 bg-[#222222] rounded shadow-inner border-t-2 border-[#444] border-l-2 border-[#444] border-r border-[#111] border-b border-[#111] relative overflow-hidden flex items-end justify-center pb-4">
+          <div className={`flex-1 bg-[#222222] rounded shadow-inner border-t-2 border-[#444] border-l-2 border-[#444] border-r border-[#111] border-b border-[#111] relative overflow-hidden flex items-end justify-center pb-4 transition-opacity duration-500 ${isPlaying ? 'opacity-100' : 'opacity-30'}`}>
              <div 
                 className="w-1 bg-[#888] origin-bottom absolute bottom-0 h-[150px] flex flex-col items-center"
                 style={{ 
