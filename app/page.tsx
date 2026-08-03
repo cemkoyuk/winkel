@@ -24,34 +24,40 @@ export default function Home() {
 
   const numVal = parseInt(numeratorInput) || 0;
   
-  const bpm = elapsedTime > 0 && numVal > 0 
-    ? Math.max(10, Math.round((60 * numVal * countedBars) / elapsedTime)) 
+  // Küsuratlı hassas BPM hesaplamamız
+  const exactBpm = elapsedTime > 0 && numVal > 0 
+    ? Math.max(10, (60 * numVal * countedBars) / elapsedTime) 
     : 112;
+    
+  // Tam sayı ve küsurat kısmını Ableton tarzı gösterim için ikiye ayırıyoruz
+  const bpmInt = Math.floor(exactBpm);
+  const bpmDec = (exactBpm % 1).toFixed(2).substring(2);
   
+  // Dinamik Renk ve Kontrast Skalası
   const getTempoInfo = (currentBpm: number) => {
-    if (currentBpm <= 20) return { term: "Larghissimo", desc: "Aşırı yavaş, olabilecek en geniş ve en derin ritim." };
-    if (currentBpm <= 45) return { term: "Grave", desc: "Çok ağır, ciddi, vakur ve derin bir ağırlıkta." };
-    if (currentBpm <= 50) return { term: "Largo", desc: "Geniş, büyük, yayayarak ve oldukça yavaş." };
-    if (currentBpm <= 55) return { term: "Lento", desc: "Yavaş, durgun, sakin ve ağırbaşlı." };
-    if (currentBpm <= 66) return { term: "Larghetto", desc: "Largo'dan biraz daha hızlı, nispeten daha rahat genişlikte." };
-    if (currentBpm <= 76) return { term: "Adagio", desc: "Rahat, acele etmeden, yavaş ve lirik." };
-    if (currentBpm <= 80) return { term: "Adagietto", desc: "Adagio'dan biraz daha hızlı, hafif hafif akan yavaşlık." };
-    if (currentBpm <= 92) return { term: "Andantino", desc: "Andante'den biraz daha hızlı (tarihsel olarak bazen daha yavaş)." };
-    if (currentBpm <= 85) return { term: "Marcia moderato", desc: "Askeri marş temposunda, düzenli ve ılımlı adım hızında." };
-    if (currentBpm <= 108) return { term: "Andante", desc: "Yürüyüş hızında, doğal insan adımı ritminde, sakin." };
-    if (currentBpm <= 112) return { term: "Andante moderato", desc: "Yürüyüş hızı ile orta hızın tam arasında dengeli bir tempo." };
-    if (currentBpm <= 120) return { term: "Moderato", desc: "Orta hızda, dengeli, ne çok hızlı ne çok yavaş (ılımlı)." };
-    if (currentBpm <= 124) return { term: "Animato", desc: "Canlı, hareketli, ruh dolu ve heyecanlı." };
-    if (currentBpm <= 138) return { term: "Allegro", desc: "Hızlı, neşeli, parlak, canlı ve belirgin bir hızda." };
-    if (currentBpm <= 144) return { term: "Allegro assai", desc: "Çok hızlı, Allegro sınırlarını iyice zorlayan kararlılıkta." };
-    if (currentBpm <= 160) return { term: "Allegro vivace", desc: "Allegro'dan daha canlı, hızlı ve kıvrak adımlarla." };
-    if (currentBpm <= 176) return { term: "Vivace", desc: "Oldukça hızlı, neşeli, atılgan ve hayat dolu." };
-    if (currentBpm <= 180) return { term: "Vivo", desc: "Canlı, ateşli, enerjik ve çok hızlı." };
-    if (currentBpm <= 200) return { term: "Presto", desc: "Çok hızlı, aceleci ve süratli." };
-    return { term: "Prestissimo", desc: "Mümkün olan en yüksek hızda, adeta çılgınca ve durdurulamaz." };
+    if (currentBpm <= 20) return { term: "Larghissimo", desc: "Aşırı yavaş, olabilecek en geniş ve en derin ritim.", bg: "#0d1b2a", text: "#ffffff" };
+    if (currentBpm <= 45) return { term: "Grave", desc: "Çok ağır, ciddi, vakur ve derin bir ağırlıkta.", bg: "#1b263b", text: "#ffffff" };
+    if (currentBpm <= 50) return { term: "Largo", desc: "Geniş, büyük, yayayarak ve oldukça yavaş.", bg: "#312244", text: "#ffffff" };
+    if (currentBpm <= 55) return { term: "Lento", desc: "Yavaş, durgun, sakin ve ağırbaşlı.", bg: "#4a4e69", text: "#ffffff" };
+    if (currentBpm <= 66) return { term: "Larghetto", desc: "Largo'dan biraz daha hızlı, nispeten daha rahat genişlikte.", bg: "#7209b7", text: "#ffffff" };
+    if (currentBpm <= 76) return { term: "Adagio", desc: "Rahat, acele etmeden, yavaş ve lirik.", bg: "#560bad", text: "#ffffff" };
+    if (currentBpm <= 80) return { term: "Adagietto", desc: "Adagio'dan biraz daha hızlı, hafif hafif akan yavaşlık.", bg: "#3a0ca3", text: "#ffffff" };
+    if (currentBpm <= 85) return { term: "Marcia moderato", desc: "Askeri marş temposunda, düzenli ve ılımlı adım hızında.", bg: "#4361ee", text: "#ffffff" };
+    if (currentBpm <= 92) return { term: "Andantino", desc: "Andante'den biraz daha hızlı (tarihsel olarak bazen daha yavaş).", bg: "#4cc9f0", text: "#082a35" }; // Açık renk, koyu yazı
+    if (currentBpm <= 108) return { term: "Andante", desc: "Yürüyüş hızında, doğal insan adımı ritminde, sakin.", bg: "#2dc653", text: "#082d11" }; // Canlı yeşil, koyu yazı
+    if (currentBpm <= 112) return { term: "Andante moderato", desc: "Yürüyüş hızı ile orta hızın tam arasında dengeli bir tempo.", bg: "#aacc00", text: "#222a00" }; // Fıstık yeşili, koyu yazı
+    if (currentBpm <= 120) return { term: "Moderato", desc: "Orta hızda, dengeli, ne çok hızlı ne çok yavaş (ılımlı).", bg: "#ffea00", text: "#332f00" }; // Parlak sarı, çok koyu yazı
+    if (currentBpm <= 124) return { term: "Animato", desc: "Canlı, hareketli, ruh dolu ve heyecanlı.", bg: "#ffb700", text: "#3b2a00" }; // Amber, koyu yazı
+    if (currentBpm <= 138) return { term: "Allegro", desc: "Hızlı, neşeli, parlak, canlı ve belirgin bir hızda.", bg: "#ff6d00", text: "#3d1900" }; // Turuncu, koyu yazı
+    if (currentBpm <= 144) return { term: "Allegro assai", desc: "Çok hızlı, Allegro sınırlarını iyice zorlayan kararlılıkta.", bg: "#e63946", text: "#ffffff" }; // Kırmızı, beyaz yazı
+    if (currentBpm <= 160) return { term: "Allegro vivace", desc: "Allegro'dan daha canlı, hızlı ve kıvrak adımlarla.", bg: "#d90429", text: "#ffffff" }; // Koyu Kırmızı
+    if (currentBpm <= 176) return { term: "Vivace", desc: "Oldukça hızlı, neşeli, atılgan ve hayat dolu.", bg: "#ff006e", text: "#ffffff" }; // Neon Pembe
+    if (currentBpm <= 180) return { term: "Vivo", desc: "Canlı, ateşli, enerjik ve çok hızlı.", bg: "#bc00dd", text: "#ffffff" }; // Mor
+    if (currentBpm <= 200) return { term: "Presto", desc: "Çok hızlı, aceleci ve süratli.", bg: "#00f5d4", text: "#003b33" }; // Camgöbeği, koyu yazı
+    return { term: "Prestissimo", desc: "Mümkün olan en yüksek hızda, adeta çılgınca ve durdurulamaz.", bg: "#ccff33", text: "#222b00" }; // Neon Limon, koyu yazı
   };
 
-  const tempoInfo = getTempoInfo(bpm);
+  const tempoInfo = getTempoInfo(exactBpm);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -98,14 +104,14 @@ export default function Home() {
   const timerIDRef = useRef<number | null>(null);
   
   const activeAccentsRef = useRef<number[]>(activeAccents);
-  const bpmRef = useRef<number>(bpm);
+  const bpmRef = useRef<number>(exactBpm);
   const numValRef = useRef<number>(numVal);
 
   useEffect(() => {
     activeAccentsRef.current = activeAccents;
-    bpmRef.current = bpm;
+    bpmRef.current = exactBpm;
     numValRef.current = numVal;
-  }, [activeAccents, bpm, numVal]);
+  }, [activeAccents, exactBpm, numVal]);
 
   const scheduleNote = (beatNumber: number, time: number) => {
     if (!audioCtxRef.current) return;
@@ -224,7 +230,6 @@ export default function Home() {
         }
       `}</style>
 
-      {/* Arka plan ve dış çerçeve tamamen siyah ve kontürsüz yapıldı */}
       <div className="w-[1280px] h-[768px] bg-black p-6 flex gap-6">
         
         {/* 1. SOL SÜTUN */}
@@ -360,7 +365,6 @@ export default function Home() {
 
         {/* 3. SAĞ SÜTUN */}
         <div className="flex-1 flex flex-col gap-6">
-          {/* Metronomu Başlat Butonu: Kutu komple beyaz, yazı ve play butonu arkaplan renginde (#222222) */}
           <div className={`flex-1 bg-white rounded shadow-inner flex flex-col items-center justify-center transition-opacity duration-500 ${isRightColumnActive ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
             <span className="text-[#222222] text-sm font-bold tracking-widest mb-6 uppercase">
               {isPlaying ? 'Metronomu Durdur' : 'Metronomu Başlat'}
@@ -380,15 +384,29 @@ export default function Home() {
             </div>
           </div>
 
-          <div className={`flex-1 bg-[#222222] rounded shadow-inner border-t-2 border-[#444] border-l-2 border-[#444] border-r border-[#111] border-b border-[#111] flex flex-col items-center justify-center p-6 text-center transition-opacity duration-500 ${isPlaying ? 'opacity-100' : 'opacity-30'}`}>
+          {/* DİNAMİK RENKLENEN TEMPO KUTUSU */}
+          <div 
+            className={`flex-1 rounded shadow-inner border-t-2 border-l-2 border-r border-b flex flex-col items-center justify-center p-6 text-center transition-all duration-700 
+              ${isPlaying ? 'opacity-100' : 'opacity-30 border-[#444] border-r-[#111] border-b-[#111]'}`}
+            style={{ 
+              backgroundColor: isPlaying ? tempoInfo.bg : '#222222',
+              borderColor: isPlaying ? `${tempoInfo.bg}88` : undefined
+            }}
+          >
             {isPlaying ? (
               <>
-                <div className="flex items-baseline gap-2 mb-2">
-                  <span className="text-white text-7xl font-bold">{bpm}</span>
-                  <span className="text-[#888] text-xl">bpm</span>
+                {/* Küsuratlı ve Dinamik Kontrastlı BPM Alanı */}
+                <div className="flex items-baseline mb-2" style={{ color: tempoInfo.text }}>
+                  <span className="text-7xl font-bold leading-none">{bpmInt}</span>
+                  <sup className="text-3xl font-bold leading-none relative -top-4">.{bpmDec}</sup>
+                  <span className="text-xl ml-2 opacity-80 font-medium">bpm</span>
                 </div>
-                <h2 className="text-white text-4xl italic font-serif mb-3 lowercase">{tempoInfo.term}</h2>
-                <p className="text-[#888] text-xs leading-relaxed max-w-[85%]">{tempoInfo.desc}</p>
+                <h2 className="text-4xl italic font-serif mb-3 lowercase transition-colors duration-700" style={{ color: tempoInfo.text }}>
+                  {tempoInfo.term}
+                </h2>
+                <p className="text-xs leading-relaxed max-w-[85%] font-medium transition-colors duration-700" style={{ color: tempoInfo.text, opacity: 0.9 }}>
+                  {tempoInfo.desc}
+                </p>
               </>
             ) : (
               <span className="text-[#555] italic">Metronom başlatılmadı...</span>
@@ -399,7 +417,7 @@ export default function Home() {
              <div 
                 className="w-1 bg-[#888] origin-bottom absolute bottom-0 h-[150px] flex flex-col items-center"
                 style={{ 
-                  animation: isPlaying ? `swing ${60 / bpm}s ease-in-out infinite alternate` : 'none',
+                  animation: isPlaying ? `swing ${60 / exactBpm}s ease-in-out infinite alternate` : 'none',
                   transform: isPlaying ? 'none' : 'rotate(20deg)' 
                 }}
              >
