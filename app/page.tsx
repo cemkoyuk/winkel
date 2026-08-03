@@ -7,7 +7,7 @@ export default function Home() {
   const [recordState, setRecordState] = useState<'idle' | 'armed' | 'recording' | 'done'>('idle');
   const [elapsedTime, setElapsedTime] = useState<number>(0);
   
-  // Ölçü ve Vurgu ayarları (Başlangıçta boş/seçilmemiş)
+  // Ölçü ve Vurgu ayarları
   const [numeratorInput, setNumeratorInput] = useState<string>('');
   const [denominatorInput, setDenominatorInput] = useState<string>('');
   const [selectedPreset, setSelectedPreset] = useState<string>('');
@@ -20,9 +20,9 @@ export default function Home() {
   const startTimeRef = useRef<number>(0);
   const animationFrameRef = useRef<number>(0);
 
-  // Aktif pay (Sayısal hesaplama için fallback 4)
-  const numVal = parseInt(numeratorInput) || 4;
-  const bpm = elapsedTime > 0 ? Math.max(20, Math.round(60 / (elapsedTime / numVal))) : 112;
+  // Aktif pay ve hesaplamalar
+  const numVal = parseInt(numeratorInput) || 0;
+  const bpm = elapsedTime > 0 && numVal > 0 ? Math.max(20, Math.round(60 / (elapsedTime / numVal))) : 112;
   
   // BPM'e göre tempo terimi
   const getTempoInfo = (currentBpm: number) => {
@@ -60,7 +60,7 @@ export default function Home() {
 
     const handleKeyUp = (e: KeyboardEvent) => {
       if (e.code === 'Space' && recordState === 'recording') {
-        setRecordState('done'); // Bittiğinde ekranda süre kalmaya devam eder
+        setRecordState('done');
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
@@ -97,13 +97,12 @@ export default function Home() {
   };
 
   const handleManualInput = (type: 'num' | 'den', val: string) => {
-    setSelectedPreset(''); // Manuel girilirse dropdown'ı resetle
+    setSelectedPreset(''); 
     if (type === 'num') setNumeratorInput(val);
     else setDenominatorInput(val);
     setActiveAccents([1]);
   };
 
-  // İstediğin tam liste ölçüler
   const timeSignatures = [
     "1/4", "2/4", "3/4", "4/4", "5/4", "6/4",
     "3/8", "4/8", "5/8", "6/8", "7/8", "9/8", "12/8",
@@ -121,13 +120,16 @@ export default function Home() {
 
       <div className="w-[1280px] h-[768px] bg-[#2A2A2A] rounded-md shadow-2xl p-6 border-4 border-[#1A1A1A] flex gap-6">
         
-        {/* 1. SOL SÜTUN (KAYIT ALANI) */}
+        {/* 1. SOL SÜTUN (KAYIT ALANI - Mükemmel Dikey Ortalama) */}
         <div className="flex-1 bg-[#222222] rounded shadow-inner border-t-2 border-[#444] border-l-2 border-[#444] border-r border-[#111] border-b border-[#111] p-8 flex flex-col items-center justify-between">
+          
           <div className="text-center w-full">
-            <span className="text-[#888888] text-sm font-bold tracking-widest uppercase">kayda girmek için kırmızı tuşa dokun</span>
+            <span className="text-[#888888] text-sm font-bold tracking-widest uppercase">
+              {recordState === 'done' ? 'yeni kayıt başlat' : 'kayda girmek için kırmızı tuşa dokun'}
+            </span>
           </div>
 
-          <div className="flex flex-col items-center mt-8">
+          <div className="flex flex-col items-center">
             <span className={`font-bold tracking-widest mb-4 transition-colors duration-300 ${recordState === 'recording' ? 'text-red-500 animate-pulse' : 'text-[#555]'}`}>
               {recordState === 'recording' ? 'ON AIR' : 'OFF AIR'}
             </span>
@@ -141,21 +143,22 @@ export default function Home() {
                 ${recordState === 'recording' ? 'bg-red-600 border-red-500 animate-pulse shadow-[0_0_50px_rgba(220,38,38,0.8)]' : ''}
               `}
             >
-              {recordState === 'idle' && <div className="w-6 h-6 bg-red-600 rounded-full opacity-30"></div>}
+              {(recordState === 'idle' || recordState === 'done') && <div className="w-6 h-6 bg-red-600 rounded-full opacity-30"></div>}
             </div>
           </div>
 
-          <div className="w-full flex flex-col items-center mt-8">
-            <div className={`w-[90%] border-2 p-6 text-center transition-all duration-300
-              ${recordState === 'idle' || recordState === 'done' ? 'border-[#444] opacity-50' : 'border-[#888] opacity-100'}
+          <div className="w-full flex flex-col items-center">
+            {/* Dolgun Buton Görünümlü Alan */}
+            <div className={`w-[90%] border-2 p-5 text-center rounded shadow-lg transition-all duration-300
+              ${recordState === 'idle' || recordState === 'done' ? 'border-[#555] bg-[#2A2A2A] opacity-50' : 'border-[#888] bg-[#333] opacity-100 shadow-[0_0_15px_rgba(255,255,255,0.1)]'}
             `}>
-              <span className="text-white text-base tracking-wider leading-relaxed">
+              <span className="text-white text-sm font-bold tracking-wider leading-relaxed block">
                 {recordState === 'recording' ? 'hissediliyor...' : 'space tuşuna basılı tut ve içinden ilk ölçünü mırıldan'}
               </span>
             </div>
           </div>
 
-          <div className="w-full text-center mt-auto pb-4">
+          <div className="w-full text-center pb-2">
             <span className="text-white font-mono text-7xl font-bold tracking-wider">
               {elapsedTime.toFixed(5)}
             </span>
@@ -168,14 +171,13 @@ export default function Home() {
           <div className="flex-1 flex flex-col items-center pt-6">
             <span className="text-[#888] text-sm font-bold tracking-widest mb-4">ölçü gir</span>
             
-            {/* Boş ve Opaklığı Düşük Manuel Girdiler */}
             <div className="flex items-center gap-4 mb-6">
               <input 
                 type="number" 
                 placeholder=""
                 value={numeratorInput} 
                 onChange={(e) => handleManualInput('num', e.target.value)}
-                className="w-20 h-20 bg-transparent border-2 border-white/30 text-white text-4xl text-center outline-none focus:border-orange-500 placeholder-white/20" 
+                className="w-20 h-20 bg-transparent border-2 border-white/30 text-white text-4xl text-center outline-none focus:border-orange-500 placeholder-white/20 rounded" 
               />
               <span className="text-white/40 text-4xl font-light">/</span>
               <input 
@@ -183,14 +185,13 @@ export default function Home() {
                 placeholder=""
                 value={denominatorInput} 
                 onChange={(e) => handleManualInput('den', e.target.value)}
-                className="w-20 h-20 bg-transparent border-2 border-white/30 text-white text-4xl text-center outline-none focus:border-orange-500 placeholder-white/20" 
+                className="w-20 h-20 bg-transparent border-2 border-white/30 text-white text-4xl text-center outline-none focus:border-orange-500 placeholder-white/20 rounded" 
               />
             </div>
 
             <span className="text-[#888] text-sm font-bold tracking-widest mb-4">ya da</span>
 
-            {/* Dropdown Menü (İlk satır: Seçiniz) */}
-            <div className="w-52 relative border-2 border-white/40">
+            <div className="w-52 relative border-2 border-white/40 rounded">
               <select 
                 value={selectedPreset}
                 onChange={handlePresetSelect}
@@ -207,21 +208,27 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Metrik Vurgu */}
-          <div className="w-full flex flex-col items-center pb-8">
-            <span className="text-[#888] text-sm font-bold tracking-widest mb-4">Metrik vurgu</span>
-            <div className="flex gap-3 flex-wrap justify-center">
-              {Array.from({ length: Math.min(numVal, 16) }, (_, i) => i + 1).map(a => (
-                <div 
-                  key={a} 
-                  onClick={() => toggleAccent(a)}
-                  className={`w-12 h-12 flex items-center justify-center rounded-full text-base font-bold border-2 cursor-pointer transition-colors 
-                    ${activeAccents.includes(a) ? 'border-white bg-white text-black' : 'border-[#666] text-[#666] hover:border-white hover:text-white'}`}
-                >
-                  {a}
+          {/* Metrik Vurgu (Yalnızca Ölçü Girildiyse Görünür) */}
+          <div className="w-full flex flex-col items-center pb-8 min-h-[100px] justify-center">
+            {numVal > 0 ? (
+              <>
+                <span className="text-[#888] text-sm font-bold tracking-widest mb-4">Metrik vurgu</span>
+                <div className="flex gap-3 flex-wrap justify-center">
+                  {Array.from({ length: Math.min(numVal, 16) }, (_, i) => i + 1).map(a => (
+                    <div 
+                      key={a} 
+                      onClick={() => toggleAccent(a)}
+                      className={`w-12 h-12 flex items-center justify-center rounded-full text-base font-bold border-2 cursor-pointer transition-colors 
+                        ${activeAccents.includes(a) ? 'border-white bg-white text-black' : 'border-[#666] text-[#666] hover:border-white hover:text-white'}`}
+                    >
+                      {a}
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </>
+            ) : (
+              <span className="text-[#444] text-xs italic">Ölçü seçildiğinde vurgular görünecek</span>
+            )}
           </div>
 
         </div>
@@ -236,7 +243,7 @@ export default function Home() {
             </span>
             <div 
               onClick={() => recordState === 'done' && setIsPlaying(!isPlaying)}
-              className="w-28 h-28 rounded-full border-4 border-white flex items-center justify-center cursor-pointer hover:bg-white/10 transition-colors"
+              className="w-28 h-28 rounded-full border-4 border-white flex items-center justify-center cursor-pointer hover:bg-white/10 transition-colors shadow-lg"
             >
               {!isPlaying ? (
                 <div className="w-0 h-0 border-t-[20px] border-t-transparent border-l-[35px] border-l-white border-b-[20px] border-b-transparent ml-3"></div>
@@ -249,7 +256,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Tempo Bölümü (Yalnızca Play'e basıldığında görünür) */}
+          {/* Tempo Bölümü */}
           <div className="flex-1 bg-[#222222] rounded shadow-inner border-t-2 border-[#444] border-l-2 border-[#444] border-r border-[#111] border-b border-[#111] flex flex-col items-center justify-center p-6 text-center">
             {isPlaying ? (
               <>
