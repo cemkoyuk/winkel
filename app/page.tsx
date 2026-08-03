@@ -16,27 +16,16 @@ export default function Home() {
   const startTimeRef = useRef<number>(0);
   const animationFrameRef = useRef<number>(0);
 
+  // Klavyeden gelen seri sinyalleri filtrelemek için durumumuzu referans olarak da tutuyoruz
+  const recordStateRef = useRef(recordState);
+  useEffect(() => {
+    recordStateRef.current = recordState;
+  }, [recordState]);
+
   const numVal = parseInt(numeratorInput) || 0;
+  // BPM Hesaplaması: Geçen süre ve seçilen ölçünün payına göre şaşmaz matematik
   const bpm = elapsedTime > 0 && numVal > 0 ? Math.max(10, Math.round(60 / (elapsedTime / numVal))) : 112;
   
-  // --- SES MOTORU (WEB AUDIO API) REFERANSLARI ---
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const nextNoteTimeRef = useRef<number>(0);
-  const currentBeatInBarRef = useRef<number>(1);
-  const timerIDRef = useRef<number | null>(null);
-  
-  // React State'lerini setInterval içinde güncel okuyabilmek için kopyalarını tutuyoruz
-  const activeAccentsRef = useRef<number[]>(activeAccents);
-  const bpmRef = useRef<number>(bpm);
-  const numValRef = useRef<number>(numVal);
-
-  // State'ler değiştikçe referansları da güncelliyoruz
-  useEffect(() => {
-    activeAccentsRef.current = activeAccents;
-    bpmRef.current = bpm;
-    numValRef.current = numVal;
-  }, [activeAccents, bpm, numVal]);
-
   const getTempoInfo = (currentBpm: number) => {
     if (currentBpm <= 20) return { term: "Larghissimo", desc: "Aşırı yavaş, olabilecek en geniş ve en derin ritim." };
     if (currentBpm <= 45) return { term: "Grave", desc: "Çok ağır, ciddi, vakur ve derin bir ağırlıkta." };
@@ -62,11 +51,13 @@ export default function Home() {
 
   const tempoInfo = getTempoInfo(bpm);
 
+  // --- KAYIT (SPACE TUŞU) MANTIĞI - DÜZELTİLDİ ---
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === 'Space') {
+      // !e.repeat sihirli kalkanımız: Sadece ilk basışı algılar, basılı tutarken gelen kopyaları yok sayar!
+      if (e.code === 'Space' && !e.repeat) {
         e.preventDefault();
-        if (recordState === 'armed') {
+        if (recordStateRef.current === 'armed') {
           setRecordState('recording');
           setIsPlaying(false);
           startTimeRef.current = performance.now();
@@ -81,9 +72,14 @@ export default function Home() {
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.code === 'Space' && recordState === 'recording') {
-        setRecordState('done');
-        cancelAnimationFrame(animationFrameRef.current);
+      if (e.code === 'Space') {
+        e.preventDefault();
+        if (recordStateRef.current === 'recording') {
+          setRecordState('done');
+          cancelAnimationFrame(animationFrameRef.current);
+          // Süreyi son bir kez kusursuzca mühürlüyoruz
+          setElapsedTime((performance.now() - startTimeRef.current) / 1000);
+        }
       }
     };
 
@@ -95,20 +91,33 @@ export default function Home() {
       window.removeEventListener('keyup', handleKeyUp);
       cancelAnimationFrame(animationFrameRef.current);
     };
-  }, [recordState]);
+  }, []); // Boş dizi: Olay dinleyicileri sadece bir kez, sağlamca bağlanır.
 
-  // --- SES MOTORU İŞLEVLERİ ---
+  // --- SES MOTORU (WEB AUDIO API) REFERANSLARI ---
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const nextNoteTimeRef = useRef<number>(0);
+  const currentBeatInBarRef = useRef<number>(1);
+  const timerIDRef = useRef<number | null>(null);
+  
+  const activeAccentsRef = useRef<number[]>(activeAccents);
+  const bpmRef = useRef<number>(bpm);
+  const numValRef = useRef<number>(numVal);
+
+  useEffect(() => {
+    activeAccentsRef.current = activeAccents;
+    bpmRef.current = bpm;
+    numValRef.current = numVal;
+  }, [activeAccents, bpm, numVal]);
+
   const scheduleNote = (beatNumber: number, time: number) => {
     if (!audioCtxRef.current) return;
     
     const osc = audioCtxRef.current.createOscillator();
     const envelope = audioCtxRef.current.createGain();
 
-    // Vurgu noktasıysa daha tiz (1200Hz), değilse daha pes (800Hz) ses üret
     const isAccent = activeAccentsRef.current.includes(beatNumber);
     osc.frequency.value = isAccent ? 1200 : 800;
     
-    // Klasik metronom "tik" hissiyatı için ses zarfı (envelope) ayarları
     envelope.gain.value = 1;
     envelope.gain.exponentialRampToValueAtTime(1, time + 0.001);
     envelope.gain.exponentialRampToValueAtTime(0.001, time + 0.1);
@@ -133,7 +142,6 @@ export default function Home() {
   const scheduler = () => {
     if (!audioCtxRef.current) return;
     
-    // Gecikmesiz ve pürüzsüz çalma için küçük bir zaman penceresi (lookahead)
     while (nextNoteTimeRef.current < audioCtxRef.current.currentTime + 0.1) {
       scheduleNote(currentBeatInBarRef.current, nextNoteTimeRef.current);
       nextNote();
@@ -141,7 +149,6 @@ export default function Home() {
     timerIDRef.current = window.setTimeout(scheduler, 25.0);
   };
 
-  // Metronom başlat/durdur tetikleyicisi
   useEffect(() => {
     if (isPlaying) {
       if (!audioCtxRef.current) {
@@ -236,7 +243,7 @@ export default function Home() {
             
             <div 
               onClick={() => {
-                if (isPlaying) setIsPlaying(false); // Yeni kayda girerken metronomu durdur
+                if (isPlaying) setIsPlaying(false);
                 setRecordState('armed');
               }}
               className={`w-40 h-40 rounded-full border-[6px] cursor-pointer transition-all duration-300 flex items-center justify-center
