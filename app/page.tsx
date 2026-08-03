@@ -19,6 +19,24 @@ export default function Home() {
   const numVal = parseInt(numeratorInput) || 0;
   const bpm = elapsedTime > 0 && numVal > 0 ? Math.max(10, Math.round(60 / (elapsedTime / numVal))) : 112;
   
+  // --- SES MOTORU (WEB AUDIO API) REFERANSLARI ---
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const nextNoteTimeRef = useRef<number>(0);
+  const currentBeatInBarRef = useRef<number>(1);
+  const timerIDRef = useRef<number | null>(null);
+  
+  // React State'lerini setInterval içinde güncel okuyabilmek için kopyalarını tutuyoruz
+  const activeAccentsRef = useRef<number[]>(activeAccents);
+  const bpmRef = useRef<number>(bpm);
+  const numValRef = useRef<number>(numVal);
+
+  // State'ler değiştikçe referansları da güncelliyoruz
+  useEffect(() => {
+    activeAccentsRef.current = activeAccents;
+    bpmRef.current = bpm;
+    numValRef.current = numVal;
+  }, [activeAccents, bpm, numVal]);
+
   const getTempoInfo = (currentBpm: number) => {
     if (currentBpm <= 20) return { term: "Larghissimo", desc: "Aşırı yavaş, olabilecek en geniş ve en derin ritim." };
     if (currentBpm <= 45) return { term: "Grave", desc: "Çok ağır, ciddi, vakur ve derin bir ağırlıkta." };
@@ -78,6 +96,77 @@ export default function Home() {
       cancelAnimationFrame(animationFrameRef.current);
     };
   }, [recordState]);
+
+  // --- SES MOTORU İŞLEVLERİ ---
+  const scheduleNote = (beatNumber: number, time: number) => {
+    if (!audioCtxRef.current) return;
+    
+    const osc = audioCtxRef.current.createOscillator();
+    const envelope = audioCtxRef.current.createGain();
+
+    // Vurgu noktasıysa daha tiz (1200Hz), değilse daha pes (800Hz) ses üret
+    const isAccent = activeAccentsRef.current.includes(beatNumber);
+    osc.frequency.value = isAccent ? 1200 : 800;
+    
+    // Klasik metronom "tik" hissiyatı için ses zarfı (envelope) ayarları
+    envelope.gain.value = 1;
+    envelope.gain.exponentialRampToValueAtTime(1, time + 0.001);
+    envelope.gain.exponentialRampToValueAtTime(0.001, time + 0.1);
+
+    osc.connect(envelope);
+    envelope.connect(audioCtxRef.current.destination);
+
+    osc.start(time);
+    osc.stop(time + 0.1);
+  };
+
+  const nextNote = () => {
+    const secondsPerBeat = 60.0 / bpmRef.current;
+    nextNoteTimeRef.current += secondsPerBeat;
+    
+    currentBeatInBarRef.current++;
+    if (currentBeatInBarRef.current > numValRef.current) {
+      currentBeatInBarRef.current = 1;
+    }
+  };
+
+  const scheduler = () => {
+    if (!audioCtxRef.current) return;
+    
+    // Gecikmesiz ve pürüzsüz çalma için küçük bir zaman penceresi (lookahead)
+    while (nextNoteTimeRef.current < audioCtxRef.current.currentTime + 0.1) {
+      scheduleNote(currentBeatInBarRef.current, nextNoteTimeRef.current);
+      nextNote();
+    }
+    timerIDRef.current = window.setTimeout(scheduler, 25.0);
+  };
+
+  // Metronom başlat/durdur tetikleyicisi
+  useEffect(() => {
+    if (isPlaying) {
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      if (audioCtxRef.current.state === 'suspended') {
+        audioCtxRef.current.resume();
+      }
+      
+      currentBeatInBarRef.current = 1;
+      nextNoteTimeRef.current = audioCtxRef.current.currentTime + 0.05;
+      scheduler();
+    } else {
+      if (timerIDRef.current !== null) {
+        window.clearTimeout(timerIDRef.current);
+        timerIDRef.current = null;
+      }
+    }
+    
+    return () => {
+      if (timerIDRef.current !== null) {
+        window.clearTimeout(timerIDRef.current);
+      }
+    };
+  }, [isPlaying]);
 
   const toggleAccent = (beat: number) => {
     setActiveAccents(prev => 
@@ -146,7 +235,10 @@ export default function Home() {
             </span>
             
             <div 
-              onClick={() => setRecordState('armed')}
+              onClick={() => {
+                if (isPlaying) setIsPlaying(false); // Yeni kayda girerken metronomu durdur
+                setRecordState('armed');
+              }}
               className={`w-40 h-40 rounded-full border-[6px] cursor-pointer transition-all duration-300 flex items-center justify-center
                 ${recordState === 'idle' || recordState === 'done' ? 'border-red-600 hover:bg-red-900/25' : ''}
                 ${recordState === 'armed' ? 'bg-red-600/40 border-orange-500 shadow-[0_0_30px_rgba(249,115,22,0.5)]' : ''}
@@ -158,7 +250,6 @@ export default function Home() {
           </div>
 
           <div className="w-full flex flex-col items-center">
-            {/* Hissediliyor durumunda arka plan beyaz, yazı koyu gri (#222222) oldu */}
             <div className={`w-[95%] border-2 p-6 text-center rounded shadow-lg transition-all duration-300
               ${recordState === 'recording' ? 'border-white bg-white opacity-100 shadow-[0_0_25px_rgba(255,255,255,0.4)]' : recordState === 'armed' ? 'border-orange-500 bg-[#3a1d0f] shadow-[0_0_20px_rgba(249,115,22,0.3)]' : 'border-[#555] bg-[#2A2A2A] opacity-50'}
             `}>
