@@ -6,6 +6,7 @@ export default function Home() {
   const [recordState, setRecordState] = useState<'idle' | 'armed' | 'recording' | 'done'>('idle');
   const [elapsedTime, setElapsedTime] = useState<number>(0);
   
+  const [countedBars, setCountedBars] = useState<number>(1);
   const [numeratorInput, setNumeratorInput] = useState<string>('');
   const [denominatorInput, setDenominatorInput] = useState<string>('');
   const [selectedPreset, setSelectedPreset] = useState<string>('');
@@ -16,15 +17,17 @@ export default function Home() {
   const startTimeRef = useRef<number>(0);
   const animationFrameRef = useRef<number>(0);
 
-  // Klavyeden gelen seri sinyalleri filtrelemek için durumumuzu referans olarak da tutuyoruz
   const recordStateRef = useRef(recordState);
   useEffect(() => {
     recordStateRef.current = recordState;
   }, [recordState]);
 
   const numVal = parseInt(numeratorInput) || 0;
-  // BPM Hesaplaması: Geçen süre ve seçilen ölçünün payına göre şaşmaz matematik
-  const bpm = elapsedTime > 0 && numVal > 0 ? Math.max(10, Math.round(60 / (elapsedTime / numVal))) : 112;
+  
+  // BPM Hesaplaması (Yeni zekamız: Geçen süreyi seçilen ölçü sayısına (countedBars) bölüyoruz)
+  const bpm = elapsedTime > 0 && numVal > 0 
+    ? Math.max(10, Math.round((60 * numVal * countedBars) / elapsedTime)) 
+    : 112;
   
   const getTempoInfo = (currentBpm: number) => {
     if (currentBpm <= 20) return { term: "Larghissimo", desc: "Aşırı yavaş, olabilecek en geniş ve en derin ritim." };
@@ -51,10 +54,8 @@ export default function Home() {
 
   const tempoInfo = getTempoInfo(bpm);
 
-  // --- KAYIT (SPACE TUŞU) MANTIĞI - DÜZELTİLDİ ---
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // !e.repeat sihirli kalkanımız: Sadece ilk basışı algılar, basılı tutarken gelen kopyaları yok sayar!
       if (e.code === 'Space' && !e.repeat) {
         e.preventDefault();
         if (recordStateRef.current === 'armed') {
@@ -77,7 +78,6 @@ export default function Home() {
         if (recordStateRef.current === 'recording') {
           setRecordState('done');
           cancelAnimationFrame(animationFrameRef.current);
-          // Süreyi son bir kez kusursuzca mühürlüyoruz
           setElapsedTime((performance.now() - startTimeRef.current) / 1000);
         }
       }
@@ -91,9 +91,8 @@ export default function Home() {
       window.removeEventListener('keyup', handleKeyUp);
       cancelAnimationFrame(animationFrameRef.current);
     };
-  }, []); // Boş dizi: Olay dinleyicileri sadece bir kez, sağlamca bağlanır.
+  }, []);
 
-  // --- SES MOTORU (WEB AUDIO API) REFERANSLARI ---
   const audioCtxRef = useRef<AudioContext | null>(null);
   const nextNoteTimeRef = useRef<number>(0);
   const currentBeatInBarRef = useRef<number>(1);
@@ -276,17 +275,35 @@ export default function Home() {
         </div>
 
         {/* 2. ORTA SÜTUN */}
-        <div className={`flex-1 bg-[#222222] rounded shadow-inner border-t-2 border-[#444] border-l-2 border-[#444] border-r border-[#111] border-b border-[#111] p-8 flex flex-col transition-opacity duration-500 ${recordState === 'done' ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
-          <div className="flex-1 flex flex-col items-center pt-6">
-            <span className="text-[#888] text-sm font-bold tracking-widest mb-4">ölçü gir</span>
+        <div className={`flex-1 bg-[#222222] rounded shadow-inner border-t-2 border-[#444] border-l-2 border-[#444] border-r border-[#111] border-b border-[#111] p-6 flex flex-col transition-opacity duration-500 ${recordState === 'done' ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
+          
+          {/* YENİ EKLENEN KISIM: Kaç Ölçü Saydın? */}
+          <div className="w-full flex flex-col items-center pb-6 border-b border-[#333] mb-4">
+            <span className="text-[#888] text-sm font-bold tracking-widest mb-3 uppercase">KAÇ ÖLÇÜ SAYDIN?</span>
+            <div className="flex gap-3 flex-wrap justify-center">
+              {[1, 2, 3, 4].map(b => (
+                <div 
+                  key={b} 
+                  onClick={() => setCountedBars(b)}
+                  className={`w-10 h-10 flex items-center justify-center rounded-full text-base font-bold border-2 cursor-pointer transition-colors 
+                    ${countedBars === b ? 'border-white bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.3)]' : 'border-[#666] text-[#666] hover:border-white hover:text-white'}`}
+                >
+                  {b}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex-1 flex flex-col items-center pt-2">
+            <span className="text-[#888] text-sm font-bold tracking-widest mb-3 uppercase">ölçü gir</span>
             
-            <div className="flex items-center gap-4 mb-6">
+            <div className="flex items-center gap-4 mb-5">
               <input 
                 type="number" 
                 placeholder=""
                 value={numeratorInput} 
                 onChange={(e) => handleManualInput('num', e.target.value)}
-                className="w-20 h-20 bg-transparent border-2 border-white/30 text-white text-4xl text-center outline-none focus:border-orange-500 placeholder-white/20 rounded" 
+                className="w-16 h-16 bg-transparent border-2 border-white/30 text-white text-3xl text-center outline-none focus:border-orange-500 placeholder-white/20 rounded" 
               />
               <span className="text-white/40 text-4xl font-light">/</span>
               <input 
@@ -294,17 +311,17 @@ export default function Home() {
                 placeholder=""
                 value={denominatorInput} 
                 onChange={(e) => handleManualInput('den', e.target.value)}
-                className="w-20 h-20 bg-transparent border-2 border-white/30 text-white text-4xl text-center outline-none focus:border-orange-500 placeholder-white/20 rounded" 
+                className="w-16 h-16 bg-transparent border-2 border-white/30 text-white text-3xl text-center outline-none focus:border-orange-500 placeholder-white/20 rounded" 
               />
             </div>
 
-            <span className="text-[#888] text-sm font-bold tracking-widest mb-4">ya da</span>
+            <span className="text-[#888] text-xs font-bold tracking-widest mb-3 uppercase">ya da</span>
 
-            <div className="w-52 relative border-2 border-white/40 rounded">
+            <div className="w-48 relative border-2 border-white/40 rounded">
               <select 
                 value={selectedPreset}
                 onChange={handlePresetSelect}
-                className="w-full bg-transparent text-white text-base p-3 outline-none appearance-none cursor-pointer"
+                className="w-full bg-transparent text-white text-base p-2 outline-none appearance-none cursor-pointer"
               >
                 <option value="" disabled className="bg-[#222] text-gray-500">seçiniz</option>
                 {timeSignatures.map(sig => (
@@ -317,16 +334,16 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="w-full flex flex-col items-center pb-8 min-h-[100px] justify-center">
+          <div className="w-full flex flex-col items-center pb-2 min-h-[90px] justify-center mt-2">
             {numVal > 0 ? (
               <>
-                <span className="text-[#888] text-sm font-bold tracking-widest mb-4">Metrik vurgu</span>
-                <div className="flex gap-3 flex-wrap justify-center">
+                <span className="text-[#888] text-sm font-bold tracking-widest mb-3 uppercase">Metrik vurgu</span>
+                <div className="flex gap-2 flex-wrap justify-center">
                   {Array.from({ length: Math.min(numVal, 16) }, (_, i) => i + 1).map(a => (
                     <div 
                       key={a} 
                       onClick={() => toggleAccent(a)}
-                      className={`w-12 h-12 flex items-center justify-center rounded-full text-base font-bold border-2 cursor-pointer transition-colors 
+                      className={`w-10 h-10 flex items-center justify-center rounded-full text-sm font-bold border-2 cursor-pointer transition-colors 
                         ${activeAccents.includes(a) ? 'border-white bg-white text-black' : 'border-[#666] text-[#666] hover:border-white hover:text-white'}`}
                     >
                       {a}
