@@ -1,65 +1,45 @@
-import Image from "next/image";
-
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    /* Arka plan: Simsiyah bir stüdyo masası gibi, içeriği tam ortaya hizalar */
+    <main className="flex items-center justify-center min-h-screen bg-black">
+      
+      {/* Ana Cihaz Kasası: Tam 1280x768 kilitli, kenarları hafif yuvarlak */}
+      <div className="w-[1280px] h-[768px] bg-[#2A2A2A] rounded-md shadow-2xl overflow-hidden flex flex-col border-2 border-[#1A1A1A]">
+
+        {/* 1. ÜST BAR: Çok ince, sadece küçük logomuz/yazımız var */}
+        <div className="h-10 bg-[#1A1A1A] border-b border-black flex items-center px-6">
+          <span className="text-[#888888] text-xs tracking-[0.3em] font-bold">WINKEL</span>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        {/* 2. DİJİTAL EKRAN: Tempo bilgisinin devasa yazacağı orta bölüm */}
+        <div className="h-[45%] bg-[#111111] flex flex-col items-center justify-center border-b-[6px] border-[#1A1A1A]">
+            <h1 className="text-6xl text-white font-light tracking-[0.2em] mb-3">MODERATO</h1>
+            <p className="text-[#666666] text-lg font-medium">Orta hızda, dengeli, ne çok hızlı ne çok yavaş (ılımlı)</p>
+            <div className="text-8xl text-[#DDDDDD] font-bold mt-6 tracking-tight">112</div>
         </div>
-      </main>
-    </div>
+
+        {/* 3. DONANIM PANELİ: Potansların ve ayarların olacağı alt bölüm */}
+        <div className="flex-1 bg-[#333333] p-6 flex gap-6">
+          
+          {/* Sol Panel Örneği */}
+          <div className="flex-1 bg-[#2C2C2C] rounded-sm shadow-inner border-t-2 border-[#444444] border-l-2 border-[#444444] border-r border-[#222222] border-b border-[#222222] p-4 flex flex-col">
+            <div className="bg-[#1A1A1A] px-3 py-1 self-start rounded-sm mb-4">
+              <span className="text-white text-xs font-bold tracking-wider">KONTROLLER</span>
+            </div>
+            {/* Buraya potanslar ve Nudge tuşları gelecek */}
+          </div>
+
+          {/* Sağ Panel Örneği */}
+          <div className="flex-1 bg-[#2C2C2C] rounded-sm shadow-inner border-t-2 border-[#444444] border-l-2 border-[#444444] border-r border-[#222222] border-b border-[#222222] p-4 flex flex-col">
+            <div className="bg-[#1A1A1A] px-3 py-1 self-start rounded-sm mb-4">
+              <span className="text-white text-xs font-bold tracking-wider">ÖLÇÜ VE VURGU</span>
+            </div>
+            {/* Buraya ölçü seçenekleri ve metrik vurgu ayarları gelecek */}
+          </div>
+
+        </div>
+
+      </div>
+    </main>
   );
 }
