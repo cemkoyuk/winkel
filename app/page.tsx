@@ -220,10 +220,12 @@ export default function Home() {
           position: fixed;
           width: 100%;
           height: 100%;
+          background-color: black;
         }
       `}</style>
 
-      <div className="w-[1280px] h-[768px] bg-[#2A2A2A] rounded-md shadow-2xl p-6 border-4 border-[#1A1A1A] flex gap-6">
+      {/* Arka plan ve dış çerçeve tamamen siyah ve kontürsüz yapıldı */}
+      <div className="w-[1280px] h-[768px] bg-black p-6 flex gap-6">
         
         {/* 1. SOL SÜTUN */}
         <div className="flex-1 bg-[#222222] rounded shadow-inner border-t-2 border-[#444] border-l-2 border-[#444] border-r border-[#111] border-b border-[#111] p-8 flex flex-col items-center justify-between">
@@ -273,10 +275,9 @@ export default function Home() {
           </div>
         </div>
 
-        {/* 2. ORTA SÜTUN (3 Ayrı Kutuya Bölündü) */}
+        {/* 2. ORTA SÜTUN */}
         <div className={`flex-1 flex flex-col gap-6 transition-opacity duration-500 ${recordState === 'done' ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
           
-          {/* KUTU 1: Kaç Ölçü Saydın? */}
           <div className="flex-[0.9] bg-[#222222] rounded shadow-inner border-t-2 border-[#444] border-l-2 border-[#444] border-r border-[#111] border-b border-[#111] p-4 flex flex-col items-center justify-center">
             <span className="text-[#888] text-sm font-bold tracking-widest mb-4 uppercase">KAÇ ÖLÇÜ SAYDIN?</span>
             <div className="flex gap-3 flex-wrap justify-center">
@@ -293,7 +294,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* KUTU 2: Ölçü Gir */}
           <div className="flex-[1.2] bg-[#222222] rounded shadow-inner border-t-2 border-[#444] border-l-2 border-[#444] border-r border-[#111] border-b border-[#111] p-4 flex flex-col items-center justify-center">
             <span className="text-[#888] text-sm font-bold tracking-widest mb-4 uppercase">ölçü gir</span>
             
@@ -334,7 +334,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* KUTU 3: Metrik Vurgu */}
           <div className="flex-1 bg-[#222222] rounded shadow-inner border-t-2 border-[#444] border-l-2 border-[#444] border-r border-[#111] border-b border-[#111] p-4 flex flex-col items-center justify-center">
             {numVal > 0 ? (
               <>
@@ -361,20 +360,21 @@ export default function Home() {
 
         {/* 3. SAĞ SÜTUN */}
         <div className="flex-1 flex flex-col gap-6">
-          <div className={`flex-1 bg-[#222222] rounded shadow-inner border-t-2 border-[#444] border-l-2 border-[#444] border-r border-[#111] border-b border-[#111] flex flex-col items-center justify-center transition-opacity duration-500 ${isRightColumnActive ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
-            <span className="text-white text-sm font-bold tracking-widest mb-6 uppercase">
+          {/* Metronomu Başlat Butonu: Kutu komple beyaz, yazı ve play butonu arkaplan renginde (#222222) */}
+          <div className={`flex-1 bg-white rounded shadow-inner flex flex-col items-center justify-center transition-opacity duration-500 ${isRightColumnActive ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
+            <span className="text-[#222222] text-sm font-bold tracking-widest mb-6 uppercase">
               {isPlaying ? 'Metronomu Durdur' : 'Metronomu Başlat'}
             </span>
             <div 
               onClick={() => isRightColumnActive && setIsPlaying(!isPlaying)}
-              className="w-28 h-28 rounded-full border-4 border-white flex items-center justify-center cursor-pointer hover:bg-white/10 transition-colors shadow-lg"
+              className="w-28 h-28 rounded-full border-4 border-[#222222] flex items-center justify-center cursor-pointer hover:bg-black/5 transition-colors shadow-lg"
             >
               {!isPlaying ? (
-                <div className="w-0 h-0 border-t-[20px] border-t-transparent border-l-[35px] border-l-white border-b-[20px] border-b-transparent ml-3"></div>
+                <div className="w-0 h-0 border-t-[20px] border-t-transparent border-l-[35px] border-l-[#222222] border-b-[20px] border-b-transparent ml-3"></div>
               ) : (
                 <div className="flex gap-3">
-                  <div className="w-3 h-12 bg-white"></div>
-                  <div className="w-3 h-12 bg-white"></div>
+                  <div className="w-3 h-12 bg-[#222222]"></div>
+                  <div className="w-3 h-12 bg-[#222222]"></div>
                 </div>
               )}
             </div>
