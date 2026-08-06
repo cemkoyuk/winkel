@@ -12,7 +12,6 @@ export default function Home() {
   const [selectedPreset, setSelectedPreset] = useState<string>('');
   const [activeAccents, setActiveAccents] = useState<number[]>([1]);
   
-  // YENİ: Metronom Tekrar Modu ('once' = kaç ölçü seçildiyse o kadar çal, 'loop' = sürekli çal)
   const [loopMode, setLoopMode] = useState<'once' | 'loop'>('once');
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
 
@@ -153,7 +152,6 @@ export default function Home() {
     const totalBeatsToPlay = numValRef.current * countedBarsRef.current;
 
     while (nextNoteTimeRef.current < audioCtxRef.current.currentTime + 0.1) {
-      // Eğer 'once' modu seçildiyse ve belirlenen ölçü kadar vuruş çalındıysa durdur
       if (loopModeRef.current === 'once' && playedBeatCountRef.current >= totalBeatsToPlay) {
         const stopDelay = Math.max(0, (nextNoteTimeRef.current - audioCtxRef.current.currentTime) * 1000);
         timerIDRef.current = window.setTimeout(() => {
@@ -382,7 +380,6 @@ export default function Home() {
 
         {/* 3. SAĞ SÜTUN */}
         <div className="flex-1 flex flex-col gap-6">
-          {/* METRONOMU BAŞLAT KUTUSU VE REPEAT SEÇENEKLERİ */}
           <div className={`flex-1 bg-white rounded shadow-inner flex flex-col items-center justify-between p-5 transition-opacity duration-500 ${isRightColumnActive ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
             
             <div className="w-full flex items-center justify-between">
@@ -390,39 +387,36 @@ export default function Home() {
                 {isPlaying ? 'Metronomu Durdur' : 'Metronomu Başlat'}
               </span>
 
-              {/* DÖNGÜ MODU BUTONLARI */}
+              {/* TASARIM DİLİMİZE UYGUN YENİ İKONLAR */}
               <div className="flex gap-2">
-                {/* 1. Seçenek: Seçilen Ölçü Kadar Çal (Varsayılan) */}
+                {/* 1. Seçenek: Seçilen Ölçü Kadar Çal (1X, 2X, vb.) */}
                 <button 
                   onClick={() => setLoopMode('once')}
-                  title="Seçilen ölçü sayısı kadar çal ve dur"
-                  className={`p-2 rounded-lg transition-all flex items-center justify-center ${
+                  title={`${countedBars} ölçü çal ve dur`}
+                  className={`w-10 h-10 rounded-lg transition-all flex items-center justify-center font-bold text-sm ${
                     loopMode === 'once' 
-                      ? 'bg-[#222222] text-[#22c55e] border-2 border-[#22c55e] shadow-md' 
-                      : 'bg-gray-200 text-gray-400 hover:bg-gray-300'
+                      ? 'bg-[#222222] text-white border-2 border-[#222222] shadow-sm' 
+                      : 'bg-transparent text-[#888888] border-2 border-[#dddddd] hover:border-[#aaaaaa] hover:text-[#555555]'
                   }`}
                 >
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M8 5h8a3 3 0 0 1 3 3v4a3 3 0 0 1-3 3H7" />
-                    <polyline points="10 18 7 15 10 12" />
-                    <text x="12.5" y="11" fontSize="8" fontWeight="bold" textAnchor="middle" fill="currentColor" stroke="none">1</text>
-                    <circle cx="12.5" cy="20" r="1.3" fill="currentColor" />
-                  </svg>
+                  {countedBars}X
                 </button>
 
-                {/* 2. Seçenek: Sürekli Repeat Et */}
+                {/* 2. Seçenek: Sürekli Repeat Et (Klasik Minimalist Loop İkonu) */}
                 <button 
                   onClick={() => setLoopMode('loop')}
                   title="Sürekli tekrar et"
-                  className={`p-2 rounded-lg transition-all flex items-center justify-center ${
+                  className={`w-10 h-10 rounded-lg transition-all flex items-center justify-center ${
                     loopMode === 'loop' 
-                      ? 'bg-[#222222] text-[#22c55e] border-2 border-[#22c55e] shadow-md' 
-                      : 'bg-gray-200 text-gray-400 hover:bg-gray-300'
+                      ? 'bg-[#222222] text-white border-2 border-[#222222] shadow-sm' 
+                      : 'bg-transparent text-[#888888] border-2 border-[#dddddd] hover:border-[#aaaaaa] hover:text-[#555555]'
                   }`}
                 >
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M8 6h8a3 3 0 0 1 3 3v5a3 3 0 0 1-3 3H7" />
-                    <polyline points="10 20 7 17 10 14" />
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17 2.1l4 4-4 4"/>
+                    <path d="M3 12.2v-2a4 4 0 0 1 4-4h13.8"/>
+                    <path d="M7 21.9l-4-4 4-4"/>
+                    <path d="M21 11.8v2a4 4 0 0 1-4 4H3.2"/>
                   </svg>
                 </button>
               </div>
@@ -443,7 +437,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* DİNAMİK RENKLENEN TEMPO KUTUSU */}
           <div 
             className={`flex-1 rounded shadow-inner border-t-2 border-l-2 border-r border-b flex flex-col items-center justify-center p-6 text-center transition-all duration-700 
               ${isPlaying ? 'opacity-100' : 'opacity-30 border-[#444] border-r-[#111] border-b-[#111]'}`}
