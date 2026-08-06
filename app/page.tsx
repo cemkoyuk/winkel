@@ -281,7 +281,7 @@ export default function Home() {
           </div>
 
           <div className="w-full flex flex-col items-center">
-            <div className={`w-[95%] border-2 p-5 text-center rounded shadow-lg transition-all duration-300 flex flex-col gap-1.5
+            <div className={`w-[95%] border-2 p-5 text-center rounded shadow-lg transition-all duration-300 flex flex-col gap-2
               ${recordState === 'recording' ? 'border-white bg-white opacity-100 shadow-[0_0_25px_rgba(255,255,255,0.4)]' : recordState === 'armed' ? 'border-orange-500 bg-[#3a1d0f] shadow-[0_0_20px_rgba(249,115,22,0.3)]' : 'border-[#555] bg-[#2A2A2A] opacity-50'}
             `}>
               <span className={`text-base font-extrabold tracking-wider uppercase leading-snug block 
@@ -290,11 +290,11 @@ export default function Home() {
                 {recordState === 'recording' ? 'HİSSEDİLİYOR...' : 'SPACE TUŞUNA BASILI TUT VE İÇİNDEN İLK ÖLÇÜNÜ MIRILDAN'}
               </span>
               
-              {/* PROFESYONEL MÜZİKAL UYARI NOTU */}
-              <span className={`text-[11px] font-medium tracking-wide block transition-colors
-                ${recordState === 'recording' ? 'text-gray-600' : 'text-gray-400'}
+              {/* YENİ GÜÇLÜ UYARI NOTU */}
+              <span className={`text-xs font-bold tracking-wide block transition-colors
+                ${recordState === 'recording' ? 'text-[#d90429]' : 'text-orange-400'}
               `}>
-                💡 İpucu: Son vuruşun süresi bitene kadar parmağını basılı tutmaya özen göster.
+                ⚠️ DİKKAT: SON VURUŞUN SÜRESİ BİTENE KADAR PARMAĞINI KALDIRMA!!!
               </span>
             </div>
           </div>
@@ -486,8 +486,9 @@ export default function Home() {
              <div 
                 className="w-1 bg-[#888] origin-bottom absolute bottom-0 h-[150px] flex flex-col items-center"
                 style={{ 
-                  animation: isVisualActive ? `swing ${60 / exactBpm}s ease-in-out infinite alternate` : 'none',
-                  transform: isVisualActive ? 'none' : 'rotate(20deg)' 
+                  /* YENİ: Animasyon artık sadece ses çalarken (isPlaying) hareket ediyor */
+                  animation: isPlaying ? `swing ${60 / exactBpm}s ease-in-out infinite alternate` : 'none',
+                  transform: isPlaying ? 'none' : 'rotate(20deg)' 
                 }}
              >
                 <div className="w-5 h-5 bg-white rounded-full -mt-2"></div>
