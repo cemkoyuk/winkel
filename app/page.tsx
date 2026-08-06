@@ -13,7 +13,10 @@ export default function Home() {
   const [activeAccents, setActiveAccents] = useState<number[]>([1]);
   
   const [loopMode, setLoopMode] = useState<'once' | 'loop'>('once');
+  
+  // Ses ve Görsel motorlarını birbirinden ayırıyoruz
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [isVisualActive, setIsVisualActive] = useState<boolean>(false);
 
   const startTimeRef = useRef<number>(0);
   const animationFrameRef = useRef<number>(0);
@@ -64,6 +67,7 @@ export default function Home() {
         if (recordStateRef.current === 'armed') {
           setRecordState('recording');
           setIsPlaying(false);
+          setIsVisualActive(false);
           startTimeRef.current = performance.now();
           
           const updateTimer = () => {
@@ -152,10 +156,11 @@ export default function Home() {
     const totalBeatsToPlay = numValRef.current * countedBarsRef.current;
 
     while (nextNoteTimeRef.current < audioCtxRef.current.currentTime + 0.1) {
+      // Eğer limit dolduysa, sadece ses motorunu durdur, görseller aktif kalsın!
       if (loopModeRef.current === 'once' && playedBeatCountRef.current >= totalBeatsToPlay) {
         const stopDelay = Math.max(0, (nextNoteTimeRef.current - audioCtxRef.current.currentTime) * 1000);
         timerIDRef.current = window.setTimeout(() => {
-          setIsPlaying(false);
+          setIsPlaying(false); // Sesi kapatır, butonu "Metronomu Çal" yapar ama isVisualActive TRUE kalır.
         }, stopDelay);
         return;
       }
@@ -263,7 +268,9 @@ export default function Home() {
             
             <div 
               onClick={() => {
+                // Yeni kayda girildiğinde her iki motoru da sıfırlıyoruz
                 if (isPlaying) setIsPlaying(false);
+                setIsVisualActive(false);
                 setRecordState('armed');
               }}
               className={`w-40 h-40 rounded-full border-[6px] cursor-pointer transition-all duration-300 flex items-center justify-center
@@ -384,12 +391,10 @@ export default function Home() {
             
             <div className="w-full flex items-center justify-between">
               <span className="text-[#222222] text-xs font-bold tracking-widest uppercase">
-                {isPlaying ? 'Metronomu Durdur' : 'Metronomu Başlat'}
+                {isPlaying ? 'Metronomu Durdur' : 'Metronomu Çal'}
               </span>
 
-              {/* TASARIM DİLİMİZE UYGUN YENİ İKONLAR */}
               <div className="flex gap-2">
-                {/* 1. Seçenek: Seçilen Ölçü Kadar Çal (1X, 2X, vb.) */}
                 <button 
                   onClick={() => setLoopMode('once')}
                   title={`${countedBars} ölçü çal ve dur`}
@@ -402,7 +407,6 @@ export default function Home() {
                   {countedBars}X
                 </button>
 
-                {/* 2. Seçenek: Sürekli Repeat Et (Klasik Minimalist Loop İkonu) */}
                 <button 
                   onClick={() => setLoopMode('loop')}
                   title="Sürekli tekrar et"
@@ -423,7 +427,17 @@ export default function Home() {
             </div>
 
             <div 
-              onClick={() => isRightColumnActive && setIsPlaying(!isPlaying)}
+              onClick={() => {
+                if (isRightColumnActive) {
+                  if (isPlaying) {
+                    setIsPlaying(false);
+                    setIsVisualActive(false); // Kullanıcı manuel durdurursa her şey deaktif olur
+                  } else {
+                    setIsPlaying(true);
+                    setIsVisualActive(true); // Oynatıldığında her şey aktifleşir
+                  }
+                }
+              }}
               className="w-24 h-24 my-auto rounded-full border-4 border-[#222222] flex items-center justify-center cursor-pointer hover:bg-black/5 transition-colors shadow-lg"
             >
               {!isPlaying ? (
@@ -439,13 +453,13 @@ export default function Home() {
 
           <div 
             className={`flex-1 rounded shadow-inner border-t-2 border-l-2 border-r border-b flex flex-col items-center justify-center p-6 text-center transition-all duration-700 
-              ${isPlaying ? 'opacity-100' : 'opacity-30 border-[#444] border-r-[#111] border-b-[#111]'}`}
+              ${isVisualActive ? 'opacity-100' : 'opacity-30 border-[#444] border-r-[#111] border-b-[#111]'}`}
             style={{ 
-              backgroundColor: isPlaying ? tempoInfo.bg : '#222222',
-              borderColor: isPlaying ? `${tempoInfo.bg}88` : undefined
+              backgroundColor: isVisualActive ? tempoInfo.bg : '#222222',
+              borderColor: isVisualActive ? `${tempoInfo.bg}88` : undefined
             }}
           >
-            {isPlaying ? (
+            {isVisualActive ? (
               <>
                 <div className="flex items-baseline mb-2" style={{ color: tempoInfo.text }}>
                   <span className="text-7xl font-bold leading-none">{bpmInt}</span>
@@ -464,12 +478,12 @@ export default function Home() {
             )}
           </div>
 
-          <div className={`flex-1 bg-[#222222] rounded shadow-inner border-t-2 border-[#444] border-l-2 border-[#444] border-r border-[#111] border-b border-[#111] relative overflow-hidden flex items-end justify-center pb-4 transition-opacity duration-500 ${isPlaying ? 'opacity-100' : 'opacity-30'}`}>
+          <div className={`flex-1 bg-[#222222] rounded shadow-inner border-t-2 border-[#444] border-l-2 border-[#444] border-r border-[#111] border-b border-[#111] relative overflow-hidden flex items-end justify-center pb-4 transition-opacity duration-500 ${isVisualActive ? 'opacity-100' : 'opacity-30'}`}>
              <div 
                 className="w-1 bg-[#888] origin-bottom absolute bottom-0 h-[150px] flex flex-col items-center"
                 style={{ 
-                  animation: isPlaying ? `swing ${60 / exactBpm}s ease-in-out infinite alternate` : 'none',
-                  transform: isPlaying ? 'none' : 'rotate(20deg)' 
+                  animation: isVisualActive ? `swing ${60 / exactBpm}s ease-in-out infinite alternate` : 'none',
+                  transform: isVisualActive ? 'none' : 'rotate(20deg)' 
                 }}
              >
                 <div className="w-5 h-5 bg-white rounded-full -mt-2"></div>
