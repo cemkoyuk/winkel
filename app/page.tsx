@@ -14,7 +14,6 @@ export default function Home() {
   
   const [loopMode, setLoopMode] = useState<'once' | 'loop'>('once');
   
-  // Ses ve Görsel motorlarını birbirinden ayırıyoruz
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [isVisualActive, setIsVisualActive] = useState<boolean>(false);
 
@@ -156,11 +155,10 @@ export default function Home() {
     const totalBeatsToPlay = numValRef.current * countedBarsRef.current;
 
     while (nextNoteTimeRef.current < audioCtxRef.current.currentTime + 0.1) {
-      // Eğer limit dolduysa, sadece ses motorunu durdur, görseller aktif kalsın!
       if (loopModeRef.current === 'once' && playedBeatCountRef.current >= totalBeatsToPlay) {
         const stopDelay = Math.max(0, (nextNoteTimeRef.current - audioCtxRef.current.currentTime) * 1000);
         timerIDRef.current = window.setTimeout(() => {
-          setIsPlaying(false); // Sesi kapatır, butonu "Metronomu Çal" yapar ama isVisualActive TRUE kalır.
+          setIsPlaying(false);
         }, stopDelay);
         return;
       }
@@ -268,7 +266,6 @@ export default function Home() {
             
             <div 
               onClick={() => {
-                // Yeni kayda girildiğinde her iki motoru da sıfırlıyoruz
                 if (isPlaying) setIsPlaying(false);
                 setIsVisualActive(false);
                 setRecordState('armed');
@@ -284,13 +281,20 @@ export default function Home() {
           </div>
 
           <div className="w-full flex flex-col items-center">
-            <div className={`w-[95%] border-2 p-6 text-center rounded shadow-lg transition-all duration-300
+            <div className={`w-[95%] border-2 p-5 text-center rounded shadow-lg transition-all duration-300 flex flex-col gap-1.5
               ${recordState === 'recording' ? 'border-white bg-white opacity-100 shadow-[0_0_25px_rgba(255,255,255,0.4)]' : recordState === 'armed' ? 'border-orange-500 bg-[#3a1d0f] shadow-[0_0_20px_rgba(249,115,22,0.3)]' : 'border-[#555] bg-[#2A2A2A] opacity-50'}
             `}>
-              <span className={`text-lg font-extrabold tracking-wider uppercase leading-snug block 
+              <span className={`text-base font-extrabold tracking-wider uppercase leading-snug block 
                 ${recordState === 'recording' ? 'text-[#222222]' : recordState === 'armed' ? 'text-orange-400 animate-pulse' : 'text-white'}
               `}>
                 {recordState === 'recording' ? 'HİSSEDİLİYOR...' : 'SPACE TUŞUNA BASILI TUT VE İÇİNDEN İLK ÖLÇÜNÜ MIRILDAN'}
+              </span>
+              
+              {/* PROFESYONEL MÜZİKAL UYARI NOTU */}
+              <span className={`text-[11px] font-medium tracking-wide block transition-colors
+                ${recordState === 'recording' ? 'text-gray-600' : 'text-gray-400'}
+              `}>
+                💡 İpucu: Son vuruşun süresi bitene kadar parmağını basılı tutmaya özen göster.
               </span>
             </div>
           </div>
@@ -431,10 +435,10 @@ export default function Home() {
                 if (isRightColumnActive) {
                   if (isPlaying) {
                     setIsPlaying(false);
-                    setIsVisualActive(false); // Kullanıcı manuel durdurursa her şey deaktif olur
+                    setIsVisualActive(false);
                   } else {
                     setIsPlaying(true);
-                    setIsVisualActive(true); // Oynatıldığında her şey aktifleşir
+                    setIsVisualActive(true);
                   }
                 }
               }}
